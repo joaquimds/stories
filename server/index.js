@@ -1,0 +1,5 @@
+export { app } from './app'
+export { runCommand } from './console'
+export { knex } from './services/knex'
+export { logger } from './services/logger'
+export { client } from './services/redis'
