@@ -10,6 +10,11 @@ export const createRouter = () => {
     res.sendStatus(200)
   })
 
+  router.post('/api/logout', (req, res) => {
+    req.logout()
+    res.sendStatus(200)
+  })
+
   const handler = getRequestHandler()
 
   router.use(async (req, res, next) => {

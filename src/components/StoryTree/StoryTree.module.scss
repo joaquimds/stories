@@ -1,0 +1,25 @@
+@import '../../styles/mixins';
+
+.container {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+
+  @include desktop {
+    flex-direction: row;
+  }
+}
+
+.column {
+  flex-basis: 33%;
+}
+
+.children {
+  display: flex;
+
+  @include desktop {
+    flex-direction: column;
+  }
+}

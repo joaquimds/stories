@@ -1,0 +1,13 @@
+@import 'variables';
+
+@function color($option) {
+  @return map-get($color, $option);
+}
+
+@function font-size($option) {
+  @return map-get($font-size, $option);
+}
+
+@function spacing($option) {
+  @return map-get($spacing, $option);
+}

@@ -1,8 +1,8 @@
+import { ApolloClient } from '@apollo/client'
+import { SchemaLink } from '@apollo/link-schema'
 import { ApolloProvider } from '@apollo/react-hooks'
 import { InMemoryCache } from 'apollo-cache-inmemory'
-import { ApolloClient } from 'apollo-client'
 import { HttpLink } from 'apollo-link-http'
-import { SchemaLink } from 'apollo-link-schema'
 import Head from 'next/head'
 import * as PropTypes from 'prop-types'
 import React, { useMemo } from 'react'
@@ -10,7 +10,7 @@ import React, { useMemo } from 'react'
 let apolloClient = null
 let schema = null
 
-export default (PageComponent, { ssr } = {}) => {
+const withData = (PageComponent, { ssr } = {}) => {
   const WithApollo = ({ apolloClient, apolloState, ...pageProps }) => {
     const client = useMemo(
       () => apolloClient || initApolloClient(apolloState),
@@ -132,3 +132,5 @@ const createApolloClient = (initialState = {}) => {
     }),
   })
 }
+
+export default withData

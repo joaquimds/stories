@@ -9,6 +9,8 @@ export const typeDefs = gql`
     id: Int!
     content: String!
     parent: Sentence
+    siblings: [Sentence]!
+    children: [Sentence]!
     author: User!
   }
   type Query {

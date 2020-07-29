@@ -1,0 +1,15 @@
+@import 'functions';
+
+html {
+  font-family: 'EB Garamond', serif;
+}
+
+a {
+  color: color(black);
+  font-weight: bold;
+  text-decoration: none;
+
+  &:focus,&:hover {
+    text-decoration: underline;
+  }
+}

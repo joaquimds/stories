@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import styles from './Login.module.scss'
 
 const Login = () => {
   const [username, setUsername] = useState('')
@@ -20,7 +21,7 @@ const Login = () => {
   }
 
   return (
-    <div className="login">
+    <div className={styles.login}>
       <h1>Login</h1>
       <form onSubmit={onSubmit}>
         <label htmlFor="username">Username</label>

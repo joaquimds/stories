@@ -11,6 +11,12 @@ export const resolvers = {
     parent: ({ parentId }) => {
       return Sentence.query().findById(parentId)
     },
+    siblings: ({ id, parentId }) => {
+      return Sentence.query().where({ parentId }).andWhereNot({ id })
+    },
+    children: ({ id }) => {
+      return Sentence.query().where({ parentId: id })
+    },
     author: ({ authorId }) => {
       return User.query().findById(authorId)
     },

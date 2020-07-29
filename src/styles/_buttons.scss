@@ -1,0 +1,18 @@
+@import 'functions';
+
+button {
+  cursor: pointer;
+}
+
+button.link {
+  background: none;
+  border: none;
+  color: color(black);
+  font-family: 'EB Garamond', serif;
+  font-size: font-size(1);
+  font-weight: bold;
+
+  &:hover,&:focus {
+    text-decoration: underline;
+  }
+}

@@ -1,0 +1,22 @@
+@import '../../styles/functions';
+
+.navbar {
+  align-items: center;
+  border-bottom: 1px solid color(grey-light);
+  display: flex;
+  padding: spacing(1);
+}
+
+.logo {
+  align-items: center;
+  display: flex;
+
+  img {
+    margin-right: spacing(0);
+    width: 64px;
+  }
+}
+
+.auth {
+  margin-left: auto;
+}
