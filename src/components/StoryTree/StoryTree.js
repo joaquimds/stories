@@ -67,37 +67,19 @@ StoryTree.propTypes = {
   id: PropTypes.number,
 }
 
-StoryTree.fragments = {}
-StoryTree.fragments.parent = gql`
-  fragment ParentFragment on Sentence {
-    ...SentenceFragment
-    children {
-      ...SentenceFragment
-    }
-  }
-  ${Sentence.fragments.sentence}
-`
-StoryTree.fragments.story = gql`
-  fragment StoryFragment on Sentence {
-    ...SentenceFragment
-    parent {
-      ...ParentFragment
-    }
-    children {
-      ...SentenceFragment
-    }
-  }
-  ${StoryTree.fragments.parent}
-  ${Sentence.fragments.sentence}
-`
-
 StoryTree.query = gql`
   query Sentence($id: Int!) {
     sentence(id: $id) {
-      ...StoryFragment
+      ...SentenceFragment
+      parent {
+        ...SentenceFragment
+      }
+      children {
+        ...SentenceFragment
+      }
     }
   }
-  ${StoryTree.fragments.story}
+  ${Sentence.fragments.sentence}
 `
 
 export default StoryTree

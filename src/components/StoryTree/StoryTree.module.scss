@@ -13,7 +13,9 @@
 }
 
 .column {
-  flex-basis: 33%;
+  @include desktop {
+    flex: 1 0 33%;
+  }
 }
 
 .children {
