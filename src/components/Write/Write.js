@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import * as PropTypes from 'prop-types'
 import { useState } from 'react'
 import Sentence from '../Sentence/Sentence'
+import StoryTree from '../StoryTree/StoryTree'
 import styles from './Write.module.scss'
 
 const ADD_SENTENCE_MUTATION = gql`
@@ -29,6 +30,24 @@ const Write = ({ parentId }) => {
       },
       update(cache, { data: { addSentenceMutation: newSentence } }) {
         setContent('')
+        const { sentence } = cache.readQuery({
+          query: StoryTree.query,
+          variables: {
+            id: parentId,
+          },
+        })
+        cache.writeQuery({
+          query: StoryTree.query,
+          variables: {
+            id: parentId,
+          },
+          data: {
+            sentence: {
+              ...sentence,
+              children: [...sentence.children, newSentence],
+            },
+          },
+        })
         return router.push('/[id]', `/${newSentence.id}`)
       },
     })

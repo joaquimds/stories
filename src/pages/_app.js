@@ -7,10 +7,11 @@ import { useEffect, useState } from 'react'
 import Footer from '../components/Footer/Footer'
 import Head from '../components/Head/Head'
 import Navbar from '../components/Navbar/Navbar'
+import UserContext from '../context/UserContext'
 
-const MyApp = ({ Component, pageProps, isAuthenticated }) => {
+const MyApp = ({ Component, pageProps, user: initialUser }) => {
   const router = useRouter()
-  const [wasAuthenticated] = useState(isAuthenticated)
+  const [user] = useState(initialUser)
 
   useEffect(() => {
     Router.events.on('routeChangeStart', NProgress.start)
@@ -24,21 +25,25 @@ const MyApp = ({ Component, pageProps, isAuthenticated }) => {
   }, [])
 
   return (
-    <div className={`root root--${router.asPath}`}>
-      <Head />
-      <Navbar isAuthenticated={wasAuthenticated} />
-      <main className="main">
-        <Component {...pageProps} />
-      </main>
-      <Footer />
-    </div>
+    <UserContext.Provider value={user}>
+      <div className={`root root--${router.asPath}`}>
+        <Head />
+        <Navbar />
+        <main className="main">
+          <Component {...pageProps} />
+        </main>
+        <Footer />
+      </div>
+    </UserContext.Provider>
   )
 }
 
 MyApp.propTypes = {
   Component: PropTypes.elementType,
   pageProps: PropTypes.object,
-  isAuthenticated: PropTypes.bool,
+  user: PropTypes.shape({
+    id: PropTypes.string,
+  }),
 }
 
 MyApp.getInitialProps = async (appContext) => {
@@ -46,7 +51,7 @@ MyApp.getInitialProps = async (appContext) => {
   const { req } = appContext.ctx
   return {
     ...appProps,
-    isAuthenticated: Boolean(req && req.user),
+    user: req ? req.user : null,
   }
 }
 

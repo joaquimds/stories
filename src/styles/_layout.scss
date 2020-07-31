@@ -1,11 +1,22 @@
+@import 'functions';
+@import 'mixins';
+
 .root {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .main {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  margin: 0 auto;
+  max-width: 600px;
+  padding: spacing(2);
+  width: 100%;
+
+  @include desktop {
+    min-height: 0;
+  }
 }

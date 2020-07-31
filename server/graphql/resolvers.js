@@ -8,14 +8,11 @@ export const resolvers = {
     },
   },
   Sentence: {
-    parent: ({ parentId }) => {
-      return Sentence.query().findById(parentId)
-    },
-    siblings: ({ id, parentId }) => {
-      return Sentence.query().where({ parentId }).andWhereNot({ id })
+    parents: (sentence) => {
+      return sentence.getParents()
     },
     children: ({ id }) => {
-      return Sentence.query().where({ parentId: id })
+      return Sentence.relatedQuery('children').for(id)
     },
     author: ({ authorId }) => {
       return User.query().findById(authorId)

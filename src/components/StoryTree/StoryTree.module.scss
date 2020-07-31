@@ -1,7 +1,9 @@
+@import '../../styles/functions';
 @import '../../styles/mixins';
 
 .container {
-  align-items: center;
+  border-radius: spacing(1);
+  box-shadow: 0 0 spacing(1) color(grey-dark);
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -9,19 +11,70 @@
 
   @include desktop {
     flex-direction: row;
+    flex-grow: 1;
+    height: 100%;
   }
 }
 
-.column {
+.half {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+
   @include desktop {
-    flex: 1 0 33%;
+    flex: 1 0 50%;
+    &:first-child {
+      border-right: 1px solid color(grey-light);
+      padding-bottom: spacing(2);
+    }
   }
+}
+
+.top {
+  padding: spacing(2) spacing(2) 0;
+
+  @include desktop {
+    padding: spacing(2);
+  }
+}
+
+.bottom {
+  flex-grow: 1;
+  padding: spacing(2);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  @include desktop {
+    margin: auto 0;
+    height: auto;
+  }
+}
+
+.not-found {
+  margin: auto;
+  padding: spacing(2);
 }
 
 .children {
   display: flex;
+  flex-direction: column;
+  margin: auto 0 spacing(2) 0;
 
-  @include desktop {
-    flex-direction: column;
+  &:last-child {
+    margin-bottom: 0;
   }
+
+  li {
+    margin-bottom: spacing(2);
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.write {
+  margin-top: auto;
 }

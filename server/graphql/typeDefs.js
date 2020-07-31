@@ -8,8 +8,7 @@ export const typeDefs = gql`
   type Sentence {
     id: Int!
     content: String!
-    parent: Sentence
-    siblings: [Sentence]!
+    parents: [Sentence]!
     children: [Sentence]!
     author: User!
   }

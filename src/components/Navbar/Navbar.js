@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import * as PropTypes from 'prop-types'
+import { useContext } from 'react'
+import UserContext from '../../context/UserContext'
 import styles from './Navbar.module.scss'
 
-const Navbar = ({ isAuthenticated }) => {
+const Navbar = () => {
   const onClickLogout = async () => {
     const response = await fetch('/api/logout', {
       method: 'POST',
@@ -12,6 +14,7 @@ const Navbar = ({ isAuthenticated }) => {
       window.location.href = '/'
     }
   }
+  const user = useContext(UserContext)
   return (
     <nav className={styles.navbar}>
       <Link href="/">
@@ -21,7 +24,7 @@ const Navbar = ({ isAuthenticated }) => {
         </a>
       </Link>
       <div className={styles.auth}>
-        {isAuthenticated ? (
+        {user ? (
           <button type="button" className="link" onClick={onClickLogout}>
             Log Out
           </button>
