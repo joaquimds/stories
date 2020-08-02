@@ -5,7 +5,7 @@ import withData from '../containers/withData'
 
 const SentencePage = () => {
   const router = useRouter()
-  const id = Number(router.query.id)
+  const { id } = router.query
 
   if (!id) {
     return <Error statusCode={404} />

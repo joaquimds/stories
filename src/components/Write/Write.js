@@ -1,14 +1,17 @@
 import { useMutation } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import * as PropTypes from 'prop-types'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
+import UserContext from '../../context/UserContext'
 import Sentence from '../Sentence/Sentence'
 import StoryTree from '../StoryTree/StoryTree'
 import styles from './Write.module.scss'
+import { ORDERS } from '../../constants'
 
 const ADD_SENTENCE_MUTATION = gql`
-  mutation AddSentenceMutation($content: String!, $parentId: Int) {
+  mutation AddSentenceMutation($content: String!, $parentId: String) {
     addSentenceMutation(content: $content, parentId: $parentId) {
       ...SentenceFragment
     }
@@ -17,6 +20,7 @@ const ADD_SENTENCE_MUTATION = gql`
 `
 
 const Write = ({ parentId }) => {
+  const user = useContext(UserContext)
   const [content, setContent] = useState('')
   const [addSentence, { loading }] = useMutation(ADD_SENTENCE_MUTATION)
   const router = useRouter()
@@ -30,24 +34,13 @@ const Write = ({ parentId }) => {
       },
       update(cache, { data: { addSentenceMutation: newSentence } }) {
         setContent('')
-        const { sentence } = cache.readQuery({
-          query: StoryTree.query,
-          variables: {
-            id: parentId,
-          },
-        })
-        cache.writeQuery({
-          query: StoryTree.query,
-          variables: {
-            id: parentId,
-          },
-          data: {
-            sentence: {
-              ...sentence,
-              children: [...sentence.children, newSentence],
-            },
-          },
-        })
+        for (const order of ORDERS) {
+          const queryVariables = { order: order.toLowerCase() }
+          if (parentId) {
+            queryVariables.id = parentId
+          }
+          updateCache(cache, queryVariables, newSentence)
+        }
         return router.push('/[id]', `/${newSentence.id}`)
       },
     })
@@ -59,13 +52,57 @@ const Write = ({ parentId }) => {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Write"
+        disabled={!user}
       />
-      <button disabled={loading || !content}>Submit</button>
+      {user ? (
+        <button className="button" disabled={loading || !content || !user}>
+          Submit
+        </button>
+      ) : (
+        <Link href="/login">
+          <a className="button">Login to contribute</a>
+        </Link>
+      )}
     </form>
   )
 }
+
+const updateCache = (cache, variables, newSentence) => {
+  try {
+    const { id } = variables
+    if (id) {
+      const { sentence } = cache.readQuery({
+        query: StoryTree.queries.sentence,
+        variables,
+      })
+      return cache.writeQuery({
+        query: StoryTree.queries.sentence,
+        variables,
+        data: {
+          sentence: {
+            ...sentence,
+            children: [newSentence, ...sentence.children],
+          },
+        },
+      })
+    }
+    const { beginnings } = cache.readQuery({
+      query: StoryTree.queries.beginnings,
+      variables,
+    })
+    cache.writeQuery({
+      query: StoryTree.queries.beginnings,
+      variables,
+      data: {
+        beginnings: [newSentence, ...beginnings],
+      },
+    })
+    // eslint-disable-next-line no-empty
+  } catch (e) {}
+}
+
 Write.propTypes = {
-  parentId: PropTypes.number,
+  parentId: PropTypes.string,
 }
 
 export default Write

@@ -6,6 +6,7 @@ html {
 
 a {
   color: color(black);
+  cursor: pointer;
   text-decoration: none;
 
   &:focus,&:hover {

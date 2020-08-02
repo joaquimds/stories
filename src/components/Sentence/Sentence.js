@@ -14,10 +14,19 @@ const Sentence = ({ sentence }) => {
     </div>
   )
 }
+const SentenceType = {
+  id: PropTypes.string,
+  content: PropTypes.string,
+  author: PropTypes.shape({
+    id: PropTypes.string,
+    username: PropTypes.string,
+  }),
+}
 Sentence.propTypes = {
   sentence: PropTypes.shape({
-    id: PropTypes.number,
-    content: PropTypes.string,
+    ...SentenceType,
+    children: PropTypes.arrayOf(PropTypes.shape(SentenceType)),
+    parent: PropTypes.shape(SentenceType),
   }),
 }
 Sentence.fragments = {
@@ -26,6 +35,7 @@ Sentence.fragments = {
       id
       content
       author {
+        id
         username
       }
     }

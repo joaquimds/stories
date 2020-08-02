@@ -1,8 +1,6 @@
-import { ApolloClient } from '@apollo/client'
+import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client'
 import { SchemaLink } from '@apollo/link-schema'
 import { ApolloProvider } from '@apollo/react-hooks'
-import { InMemoryCache } from 'apollo-cache-inmemory'
-import { HttpLink } from 'apollo-link-http'
 import Head from 'next/head'
 import * as PropTypes from 'prop-types'
 import React, { useMemo } from 'react'
@@ -116,17 +114,31 @@ const initApolloClient = (initialState = {}) => {
  * @param  {Object} [initialState={}]
  */
 const createApolloClient = (initialState = {}) => {
+  const cache = new InMemoryCache({
+    typePolicies: {
+      Sentence: {
+        fields: {
+          children: {
+            merge(_, incoming = []) {
+              return incoming
+            },
+          },
+        },
+      },
+    },
+  })
+
   if (typeof window === 'undefined') {
     return new ApolloClient({
       ssrMode: true,
-      cache: new InMemoryCache().restore(initialState),
+      cache: cache.restore(initialState),
       link: new SchemaLink({ schema }),
     })
   }
 
   return new ApolloClient({
     ssrMode: true,
-    cache: new InMemoryCache().restore(initialState),
+    cache: cache.restore(initialState),
     link: new HttpLink({
       uri: '/api/graphql',
     }),

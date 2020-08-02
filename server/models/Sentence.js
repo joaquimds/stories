@@ -1,4 +1,4 @@
-import { Model, raw } from 'objection'
+import { Model, raw, ref } from 'objection'
 
 export class Sentence extends Model {
   static get tableName() {
@@ -41,5 +41,37 @@ export class Sentence extends Model {
           })
       })
       .orderBy('depth', 'desc')
+  }
+
+  static getChildren(parentId, order = 'longest') {
+    if (order !== 'longest') {
+      return Sentence.query()
+        .where({ parentId })
+        .orderBy('date', order === 'newest' ? 'desc' : 'asc')
+    }
+    const subquery = Sentence.query()
+      .max('depth')
+      .as('length')
+      .from('sentenceDepths')
+      .withRecursive('sentenceDepths', (qb1) => {
+        qb1
+          .select('id', raw('1 as depth'))
+          .from('sentences as s1')
+          .where({ id: ref('sentences.id') })
+          .union((qb2) => {
+            qb2
+              .select('sentences.id', raw('depth + 1'))
+              .from('sentences')
+              .join(
+                'sentenceDepths',
+                'sentences.parent_id',
+                'sentenceDepths.id'
+              )
+          })
+      })
+    return Sentence.query()
+      .select(['sentences.*', subquery])
+      .where({ parentId })
+      .orderBy('length', 'desc')
   }
 }

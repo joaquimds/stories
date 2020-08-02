@@ -1,16 +1,37 @@
 @import 'functions';
 
 button {
-  cursor: pointer;
-}
-
-button.link {
-  background: none;
-  border: none;
   color: color(black);
+  cursor: pointer;
   font-family: 'EB Garamond', serif;
   font-size: font-size(1);
-  font-weight: bold;
+
+  &:disabled {
+    cursor: auto;
+  }
+}
+
+.button {
+  background: color(grey-tint);
+  border: 1px solid color(grey-dark);
+  border-radius: 4px;
+  text-align: center;
+  &:hover,&:focus {
+    &:not(:disabled) {
+      background: color(grey-light);
+    }
+    text-decoration: none;
+  }
+}
+
+.link {
+  background: none;
+  border: none;
+  font-size: font-size(1);
+
+  &.active {
+    font-weight: bold;
+  }
 
   &:hover,&:focus {
     text-decoration: underline;

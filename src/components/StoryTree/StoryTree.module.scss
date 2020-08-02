@@ -58,6 +58,12 @@
   padding: spacing(2);
 }
 
+.sort {
+  display: flex;
+  justify-content: space-evenly;
+  margin-bottom: spacing(1);
+}
+
 .children {
   display: flex;
   flex-direction: column;
