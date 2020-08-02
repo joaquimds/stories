@@ -49,7 +49,7 @@ const StoryTree = ({ id }) => {
           {id && sentence ? (
             <Page sentence={sentence} />
           ) : (
-            <p className={styles.center}>...</p>
+            <p className={styles.center}>(begin)</p>
           )}
         </div>
       </div>
@@ -85,7 +85,7 @@ const StoryTree = ({ id }) => {
                     className="link"
                     onClick={onClickLoadMore}
                   >
-                    Load More
+                    (Load More)
                   </button>
                 </div>
               ) : null}

@@ -49,7 +49,7 @@ export class Sentence extends Model {
   }
 
   static async getChildren(parentId, order = 'longest', offset = 0) {
-    const limit = 10
+    const limit = 5
     if (order !== 'longest') {
       return Sentence.query()
         .where({ parentId })
