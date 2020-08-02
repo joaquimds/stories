@@ -120,14 +120,6 @@ const mergeChildren = (existing = [], incoming = []) => {
 const createApolloClient = (initialState = {}) => {
   const cache = new InMemoryCache({
     typePolicies: {
-      Root: {
-        fields: {
-          children: {
-            keyArgs: ['order'],
-            merge: mergeChildren,
-          },
-        },
-      },
       Sentence: {
         fields: {
           children: {

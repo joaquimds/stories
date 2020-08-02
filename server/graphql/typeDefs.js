@@ -18,14 +18,8 @@ export const typeDefs = gql`
     children(order: Order, offset: Int): [Sentence]!
     author: User
   }
-  type Root {
-    id: String!
-    childCount: Int!
-    children(order: Order, offset: Int): [Sentence]!
-  }
   type Query {
-    sentence(id: String!): Sentence
-    root: Root
+    sentence(id: String): Sentence
   }
   type DeleteResponse {
     success: Boolean!

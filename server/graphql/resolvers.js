@@ -4,28 +4,21 @@ import { User } from '../models/User'
 export const resolvers = {
   Query: {
     sentence: (parent, { id }) => {
-      return Sentence.query().findById(id)
-    },
-    root: () => {
-      return {
-        id: 'root',
-      }
-    },
-  },
-  Root: {
-    childCount: () => {
-      return Sentence.countChildren(null)
-    },
-    children: (_, { order, offset }) => {
-      return Sentence.getChildren(null, order, offset)
+      return id ? Sentence.query().findById(id) : { id: null }
     },
   },
   Sentence: {
-    content: ({ content, authorId }) => {
+    id: ({ id }) => {
+      return id || 'root'
+    },
+    content: ({ id, content, authorId }) => {
+      if (!id) {
+        return ''
+      }
       return authorId ? content : '[deleted]'
     },
     parents: (sentence) => {
-      return sentence.getParents()
+      return sentence.id ? sentence.getParents() : []
     },
     childCount: (sentence) => {
       return Sentence.countChildren(sentence.id)
