@@ -1,11 +1,10 @@
-import { useMutation } from '@apollo/client'
+import { useApolloClient, useMutation } from '@apollo/client'
 import gql from 'graphql-tag'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useContext } from 'react'
 import UserContext from '../../context/UserContext'
 import Sentence from '../Sentence/Sentence'
-import StoryTree from '../StoryTree/StoryTree'
 import styles from './Page.module.scss'
 
 const DELETE_SENTENCE_MUTATION = gql`
@@ -21,6 +20,7 @@ const DELETE_SENTENCE_MUTATION = gql`
 `
 
 const Page = ({ sentence }) => {
+  const client = useApolloClient()
   const user = useContext(UserContext)
   const router = useRouter()
   const [deleteSentence, { loading }] = useMutation(DELETE_SENTENCE_MUTATION, {
@@ -29,7 +29,7 @@ const Page = ({ sentence }) => {
   const isAuthor = user && sentence.author && sentence.author.id === user.id
   const onClickDelete = async () => {
     await deleteSentence({
-      update(
+      async update(
         cache,
         {
           data: {
@@ -47,12 +47,12 @@ const Page = ({ sentence }) => {
             data: updated,
           })
         }
+        await client.resetStore()
         const parent = sentence.parents[sentence.parents.length - 1]
         if (!parent) {
           return router.push('/')
         }
-        cache.evict(cache.identify(sentence))
-        router.push('/[id]', `/${parent.id}`)
+        return router.push('/[id]', `/${parent.id}`)
       },
     })
   }

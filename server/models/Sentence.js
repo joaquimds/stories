@@ -43,11 +43,19 @@ export class Sentence extends Model {
       .orderBy('depth', 'desc')
   }
 
-  static getChildren(parentId, order = 'longest') {
+  static async countChildren(parentId) {
+    const countQuery = await Sentence.query().where({ parentId }).count()
+    return Number(countQuery[0].count)
+  }
+
+  static async getChildren(parentId, order = 'longest', offset = 0) {
+    const limit = 10
     if (order !== 'longest') {
       return Sentence.query()
         .where({ parentId })
         .orderBy('date', order === 'newest' ? 'desc' : 'asc')
+        .offset(offset)
+        .limit(limit)
     }
     const subquery = Sentence.query()
       .max('depth')
@@ -73,5 +81,7 @@ export class Sentence extends Model {
       .select(['sentences.*', subquery])
       .where({ parentId })
       .orderBy('length', 'desc')
+      .offset(offset)
+      .limit(limit)
   }
 }

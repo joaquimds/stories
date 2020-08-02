@@ -1,4 +1,4 @@
-import { useMutation } from '@apollo/react-hooks'
+import { useApolloClient, useMutation } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -24,6 +24,7 @@ const Write = ({ parentId }) => {
   const [content, setContent] = useState('')
   const [addSentence, { loading }] = useMutation(ADD_SENTENCE_MUTATION)
   const router = useRouter()
+  const client = useApolloClient()
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -32,15 +33,9 @@ const Write = ({ parentId }) => {
         content,
         parentId,
       },
-      update(cache, { data: { addSentenceMutation: newSentence } }) {
+      async update(cache, { data: { addSentenceMutation: newSentence } }) {
         setContent('')
-        for (const order of ORDERS) {
-          const queryVariables = { order: order.toLowerCase() }
-          if (parentId) {
-            queryVariables.id = parentId
-          }
-          updateCache(cache, queryVariables, newSentence)
-        }
+        await client.resetStore()
         return router.push('/[id]', `/${newSentence.id}`)
       },
     })
@@ -65,49 +60,6 @@ const Write = ({ parentId }) => {
       )}
     </form>
   )
-}
-
-const updateCache = (cache, variables, newSentence) => {
-  try {
-    const { id } = variables
-    if (id) {
-      const { sentence } = cache.readQuery({
-        query: StoryTree.queries.sentence,
-        variables,
-      })
-      const children = merge(sentence.children, newSentence, variables.order)
-      return cache.writeQuery({
-        query: StoryTree.queries.sentence,
-        variables,
-        data: {
-          sentence: {
-            ...sentence,
-            children,
-          },
-        },
-      })
-    }
-    const { beginnings } = cache.readQuery({
-      query: StoryTree.queries.beginnings,
-      variables,
-    })
-    const children = merge(beginnings, newSentence, variables.order)
-    cache.writeQuery({
-      query: StoryTree.queries.beginnings,
-      variables,
-      data: {
-        beginnings: children,
-      },
-    })
-    // eslint-disable-next-line no-empty
-  } catch (e) {}
-}
-
-const merge = (list, item, order) => {
-  if (order === 'newest') {
-    return [item, ...list]
-  }
-  return [...list, item]
 }
 
 Write.propTypes = {

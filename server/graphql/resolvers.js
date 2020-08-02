@@ -6,8 +6,18 @@ export const resolvers = {
     sentence: (parent, { id }) => {
       return Sentence.query().findById(id)
     },
-    beginnings: (parent, { order }) => {
-      return Sentence.getChildren(null, order)
+    root: () => {
+      return {
+        id: 'root',
+      }
+    },
+  },
+  Root: {
+    childCount: () => {
+      return Sentence.countChildren(null)
+    },
+    children: (_, { order, offset }) => {
+      return Sentence.getChildren(null, order, offset)
     },
   },
   Sentence: {
@@ -17,8 +27,11 @@ export const resolvers = {
     parents: (sentence) => {
       return sentence.getParents()
     },
-    children: (sentence, args) => {
-      return Sentence.getChildren(sentence.id, args.order)
+    childCount: (sentence) => {
+      return Sentence.countChildren(sentence.id)
+    },
+    children: (sentence, { order, offset }) => {
+      return Sentence.getChildren(sentence.id, order, offset)
     },
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null

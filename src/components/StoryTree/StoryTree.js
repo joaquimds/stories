@@ -11,20 +11,18 @@ import styles from './StoryTree.module.scss'
 
 const StoryTree = ({ id }) => {
   const [order, setOrder] = useState('longest')
-  const { data, loading } = id
+  const { data, loading, fetchMore } = id
     ? useQuery(StoryTree.queries.sentence, {
         variables: {
           id,
           order,
         },
       })
-    : useQuery(StoryTree.queries.beginnings, {
+    : useQuery(StoryTree.queries.root, {
         variables: {
           order,
         },
       })
-
-  const { sentence, children } = extractSentences(id, data)
   useEffect(() => {
     if (loading) {
       NProgress.start()
@@ -33,12 +31,21 @@ const StoryTree = ({ id }) => {
     NProgress.done()
   }, [loading])
 
+  const { sentence, children, childCount } = extractSentences(id, data)
   if (id && !sentence && !loading) {
     return (
       <div className={styles.container}>
         <p className={styles.center}>Not Found</p>
       </div>
     )
+  }
+
+  const onClickLoadMore = () => {
+    fetchMore({
+      variables: {
+        offset: children && children.length,
+      }
+    })
   }
 
   return (
@@ -60,6 +67,7 @@ const StoryTree = ({ id }) => {
                 <div className={styles.sort}>
                   {ORDERS.map((o) => (
                     <button
+                      type="button"
                       key={o}
                       className={buttonClass(o, order)}
                       onClick={() => setOrder(o.toLowerCase())}
@@ -76,6 +84,17 @@ const StoryTree = ({ id }) => {
                   </li>
                 ))}
               </ul>
+              {children.length < childCount ? (
+                <div className={styles['load-more']}>
+                  <button
+                    type="button"
+                    className="link"
+                    onClick={onClickLoadMore}
+                  >
+                    Load More
+                  </button>
+                </div>
+              ) : null}
               <div className={styles.write}>
                 <Write parentId={sentence ? sentence.id : null} />
               </div>
@@ -91,10 +110,12 @@ const extractSentences = (id, data) => {
   if (id) {
     const sentence = data && data.sentence ? data.sentence : null
     const children = sentence && sentence.children
-    return { sentence, children }
+    const childCount = sentence && sentence.childCount
+    return { sentence, children, childCount }
   }
-  const children = data && data.beginnings ? data.beginnings : null
-  return { children }
+  const children = data && data.root ? data.root.children : null
+  const childCount = data && data.root ? data.root.childCount : null
+  return { children, childCount }
 }
 
 const buttonClass = (order, current) => {
@@ -106,22 +127,27 @@ StoryTree.propTypes = {
 }
 
 StoryTree.queries = {
-  beginnings: gql`
-    query Beginnings($order: Order) {
-      beginnings(order: $order) {
-        ...SentenceFragment
+  root: gql`
+    query Root($order: Order, $offset: Int) {
+      root {
+        id
+        childCount
+        children(order: $order, offset: $offset) {
+          ...SentenceFragment
+        }
       }
     }
     ${Sentence.fragments.sentence}
   `,
   sentence: gql`
-    query Sentence($id: String!, $order: Order) {
+    query Sentence($id: String!, $order: Order, $offset: Int) {
       sentence(id: $id) {
         ...SentenceFragment
         parents {
           ...SentenceFragment
         }
-        children(order: $order) {
+        childCount
+        children(order: $order, offset: $offset) {
           ...SentenceFragment
         }
       }

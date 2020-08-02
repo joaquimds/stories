@@ -28,4 +28,17 @@ exports.seed = async (knex) => {
     authorId: 1,
     parentId: 3,
   })
+  for (let i = 0; i < 10; i++) {
+    await knex('sentences').insert({
+      content: `Beginning ${i + 1}`,
+      authorId: 1,
+    })
+  }
+  for (let i = 0; i < 10; i++) {
+    await knex('sentences').insert({
+      content: `Test ${i + 1}`,
+      authorId: 1,
+      parentId: 1,
+    })
+  }
 }

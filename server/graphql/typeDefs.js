@@ -14,12 +14,18 @@ export const typeDefs = gql`
     id: String!
     content: String!
     parents: [Sentence]!
-    children(order: Order): [Sentence]!
+    childCount: Int!
+    children(order: Order, offset: Int): [Sentence]!
     author: User
+  }
+  type Root {
+    id: String!
+    childCount: Int!
+    children(order: Order, offset: Int): [Sentence]!
   }
   type Query {
     sentence(id: String!): Sentence
-    beginnings(order: Order): [Sentence]!
+    root: Root
   }
   type DeleteResponse {
     success: Boolean!

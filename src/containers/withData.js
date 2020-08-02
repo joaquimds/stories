@@ -109,6 +109,10 @@ const initApolloClient = (initialState = {}) => {
   return apolloClient
 }
 
+const mergeChildren = (existing = [], incoming = []) => {
+  return [...existing, ...incoming]
+}
+
 /**
  * Creates and configures the ApolloClient
  * @param  {Object} [initialState={}]
@@ -116,12 +120,19 @@ const initApolloClient = (initialState = {}) => {
 const createApolloClient = (initialState = {}) => {
   const cache = new InMemoryCache({
     typePolicies: {
+      Root: {
+        fields: {
+          children: {
+            keyArgs: ['order'],
+            merge: mergeChildren,
+          },
+        },
+      },
       Sentence: {
         fields: {
           children: {
-            merge(_, incoming = []) {
-              return incoming
-            },
+            keyArgs: ['order'],
+            merge: mergeChildren,
           },
         },
       },
