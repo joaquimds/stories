@@ -35,8 +35,8 @@ const Write = ({ parentId }) => {
       },
       async update(cache, { data: { addSentenceMutation: newSentence } }) {
         setContent('')
+        await router.push('/[id]', `/${newSentence.id}`)
         await client.resetStore()
-        return router.push('/[id]', `/${newSentence.id}`)
       },
     })
   }
