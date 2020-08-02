@@ -1,4 +1,4 @@
-import { useApolloClient, useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client'
 import gql from 'graphql-tag'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -20,7 +20,6 @@ const DELETE_SENTENCE_MUTATION = gql`
 `
 
 const Page = ({ sentence }) => {
-  const client = useApolloClient()
   const user = useContext(UserContext)
   const router = useRouter()
   const [deleteSentence, { loading }] = useMutation(DELETE_SENTENCE_MUTATION, {
@@ -47,8 +46,17 @@ const Page = ({ sentence }) => {
             data: updated,
           })
         }
-        await client.resetStore()
         const parent = sentence.parents[sentence.parents.length - 1]
+        cache.modify({
+          id: `Sentence:${parent ? parent.id : 'root'}`,
+          fields: {
+            children(childRefs, { readField }) {
+              return childRefs.filter(
+                (childRef) => readField('id', childRef) !== sentence.id
+              )
+            },
+          },
+        })
         if (!parent) {
           return router.push('/')
         }
