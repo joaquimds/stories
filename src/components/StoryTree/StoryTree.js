@@ -49,7 +49,7 @@ const StoryTree = ({ id }) => {
           {id && sentence ? (
             <Page sentence={sentence} />
           ) : (
-            <p className={styles.center}>(begin)</p>
+            <p className={`${styles.center} ${styles.begin}`}>(begin)</p>
           )}
         </div>
       </div>
