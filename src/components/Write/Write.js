@@ -75,13 +75,14 @@ const updateCache = (cache, variables, newSentence) => {
         query: StoryTree.queries.sentence,
         variables,
       })
+      const children = merge(sentence.children, newSentence, variables.order)
       return cache.writeQuery({
         query: StoryTree.queries.sentence,
         variables,
         data: {
           sentence: {
             ...sentence,
-            children: [newSentence, ...sentence.children],
+            children,
           },
         },
       })
@@ -90,15 +91,23 @@ const updateCache = (cache, variables, newSentence) => {
       query: StoryTree.queries.beginnings,
       variables,
     })
+    const children = merge(beginnings, newSentence, variables.order)
     cache.writeQuery({
       query: StoryTree.queries.beginnings,
       variables,
       data: {
-        beginnings: [newSentence, ...beginnings],
+        beginnings: children,
       },
     })
     // eslint-disable-next-line no-empty
   } catch (e) {}
+}
+
+const merge = (list, item, order) => {
+  if (order === 'newest') {
+    return [item, ...list]
+  }
+  return [...list, item]
 }
 
 Write.propTypes = {

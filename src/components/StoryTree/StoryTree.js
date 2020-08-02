@@ -36,22 +36,22 @@ const StoryTree = ({ id }) => {
   if (id && !sentence && !loading) {
     return (
       <div className={styles.container}>
-        <p className={styles['not-found']}>Not Found</p>
+        <p className={styles.center}>Not Found</p>
       </div>
     )
   }
 
   return (
     <div className={styles.container}>
-      {sentence ? (
-        <div className={`${styles.half} ${styles.top}`}>
-          <div className={styles.content}>
-            {sentence ? <Page sentence={sentence} /> : null}
-          </div>
+      <div className={`${styles.half} ${styles.top}`}>
+        <div className={styles.content}>
+          {sentence ? (
+            <Page sentence={sentence} />
+          ) : (
+            <p className={styles.center}>...</p>
+          )}
         </div>
-      ) : (
-        <div className={`${styles.half}`} />
-      )}
+      </div>
       <div className={`${styles.half} ${styles.bottom}`}>
         <div className={styles.content}>
           {children ? (
