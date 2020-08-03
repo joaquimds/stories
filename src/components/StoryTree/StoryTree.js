@@ -1,13 +1,15 @@
 import { useQuery } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
-import NProgress from 'nprogress'
 import * as PropTypes from 'prop-types'
 import { useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
+import NProgress from '../../services/nprogress'
 import Page from '../Page/Page'
 import Sentence from '../Sentence/Sentence'
 import Write from '../Write/Write'
 import styles from './StoryTree.module.scss'
+
+const nprogress = new NProgress()
 
 const StoryTree = ({ id }) => {
   const [order, setOrder] = useState('longest')
@@ -19,17 +21,25 @@ const StoryTree = ({ id }) => {
   })
   useEffect(() => {
     if (loading) {
-      NProgress.start()
+      nprogress.start()
       return
     }
-    NProgress.done()
+    nprogress.done()
   }, [loading])
 
   const { sentence, children, childCount } = extractSentences(data)
-  if (!sentence && !loading) {
+  if (!sentence) {
+    if (!loading) {
+      return (
+        <div className={styles.container}>
+          <p className={styles.center}>Not Found</p>
+        </div>
+      )
+    }
     return (
       <div className={styles.container}>
-        <p className={styles.center}>Not Found</p>
+        <div className={`${styles.half} ${styles.top}`} />
+        <div className={`${styles.half} ${styles.bottom}`} />
       </div>
     )
   }

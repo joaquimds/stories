@@ -4,22 +4,26 @@ import { User } from '../models/User'
 import { verify } from '../services/bcrypt'
 
 pp.use(
-  new LocalStrategy(async (username, password, done) => {
-    try {
-      const user = await User.query().findOne({ username })
-      if (!user) {
-        return done(null, false, { message: 'Incorrect username' })
-      }
-      const isValid = await verify(password, user.passwordHash)
+  new LocalStrategy(
+    { usernameField: 'email' },
+    async (email, password, done) => {
+      console.log('e', email, password)
+      try {
+        const user = await User.query().findOne({ email })
+        if (!user) {
+          return done(null, false, { message: 'Incorrect email' })
+        }
+        const isValid = await verify(password, user.passwordHash)
 
-      if (!isValid) {
-        return done(null, false, { message: 'Incorrect password' })
+        if (!isValid) {
+          return done(null, false, { message: 'Incorrect password' })
+        }
+        return done(null, user)
+      } catch (e) {
+        return done(e)
       }
-      return done(null, user)
-    } catch (e) {
-      return done(e)
     }
-  })
+  )
 )
 
 pp.serializeUser((user, done) => {

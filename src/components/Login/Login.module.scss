@@ -1,4 +1,24 @@
+@import "../../styles/functions";
+
 .login {
   display: flex;
   flex-direction: column;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+
+  input,.submit {
+    margin-bottom: spacing(1);
+    padding: spacing(0);
+  }
+
+  input {
+  }
+}
+
+.toggle {
+  font-weight: bold;
+  margin-right: auto;
 }

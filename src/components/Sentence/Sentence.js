@@ -19,7 +19,7 @@ const SentenceType = {
   content: PropTypes.string,
   author: PropTypes.shape({
     id: PropTypes.string,
-    username: PropTypes.string,
+    name: PropTypes.string,
   }),
 }
 Sentence.propTypes = {
@@ -36,7 +36,7 @@ Sentence.fragments = {
       content
       author {
         id
-        username
+        name
       }
     }
   `,

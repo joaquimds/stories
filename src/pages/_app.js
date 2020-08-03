@@ -1,26 +1,28 @@
 import '../styles/app.scss'
 import App from 'next/app'
 import Router, { useRouter } from 'next/router'
-import NProgress from 'nprogress'
 import * as PropTypes from 'prop-types'
 import { useEffect, useState } from 'react'
 import Footer from '../components/Footer/Footer'
 import Head from '../components/Head/Head'
 import Navbar from '../components/Navbar/Navbar'
 import UserContext from '../context/UserContext'
+import NProgress from '../services/nprogress'
+
+const nprogress = new NProgress()
 
 const MyApp = ({ Component, pageProps, user: initialUser }) => {
   const router = useRouter()
   const [user] = useState(initialUser)
 
   useEffect(() => {
-    Router.events.on('routeChangeStart', NProgress.start)
-    Router.events.on('routeChangeComplete', NProgress.done)
-    Router.events.on('routeChangeError', NProgress.done)
+    Router.events.on('routeChangeStart', nprogress.start)
+    Router.events.on('routeChangeComplete', nprogress.done)
+    Router.events.on('routeChangeError', nprogress.done)
     return () => {
-      Router.events.off('routeChangeStart', NProgress.start)
-      Router.events.off('routeChangeComplete', NProgress.done)
-      Router.events.off('routeChangeError', NProgress.done)
+      Router.events.off('routeChangeStart', nprogress.start)
+      Router.events.off('routeChangeComplete', nprogress.done)
+      Router.events.off('routeChangeError', nprogress.done)
     }
   }, [])
 
