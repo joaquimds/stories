@@ -6,6 +6,8 @@ import { useContext } from 'react'
 import UserContext from '../../context/UserContext'
 import Sentence from '../Sentence/Sentence'
 import styles from './Page.module.scss'
+import Head from 'next/head'
+import NHead from 'next/dist/next-server/lib/head'
 
 const DELETE_SENTENCE_MUTATION = gql`
   mutation DeleteSentenceMutation($id: String!) {
@@ -60,7 +62,7 @@ const Page = ({ sentence }) => {
             },
           },
         })
-        if (!parent) {
+        if (parent.id === 'root') {
           return router.push('/')
         }
         return router.push('/[id]', `/${parent.id}`)
@@ -69,6 +71,18 @@ const Page = ({ sentence }) => {
   }
   return (
     <>
+      <Head>
+        <meta
+          key="og:description"
+          property="og:description"
+          content={sentence.content}
+        />
+        <meta
+          key="twitter:description"
+          name="twitter:description"
+          content={sentence.content}
+        />
+      </Head>
       <p>
         {sentence.parents.map((p) => (
           <span key={p.id}>
