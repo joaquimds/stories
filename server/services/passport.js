@@ -7,7 +7,6 @@ pp.use(
   new LocalStrategy(
     { usernameField: 'email' },
     async (email, password, done) => {
-      console.log('e', email, password)
       try {
         const user = await User.query().findOne({ email })
         if (!user) {

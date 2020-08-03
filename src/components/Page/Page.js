@@ -48,8 +48,11 @@ const Page = ({ sentence }) => {
         }
         const parent = sentence.parents[sentence.parents.length - 1]
         cache.modify({
-          id: `Sentence:${parent ? parent.id : 'root'}`,
+          id: `Sentence:${parent.id}`,
           fields: {
+            childCount(count) {
+              return count > 0 ? count - 1 : count
+            },
             children(childRefs, { readField }) {
               return childRefs.filter(
                 (childRef) => readField('id', childRef) !== sentence.id

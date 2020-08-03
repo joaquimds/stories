@@ -51,9 +51,10 @@ export class Sentence extends Model {
   static async getChildren(parentId, order = 'longest', offset = 0) {
     const limit = 5
     if (order !== 'longest') {
+      const direction = order === 'newest' ? 'desc' : 'asc'
       return Sentence.query()
         .where({ parentId })
-        .orderBy('date', order === 'newest' ? 'desc' : 'asc')
+        .orderBy('id', direction)
         .offset(offset)
         .limit(limit)
     }
@@ -81,6 +82,7 @@ export class Sentence extends Model {
       .select(['sentences.*', subquery])
       .where({ parentId })
       .orderBy('length', 'desc')
+      .orderBy('id', 'asc')
       .offset(offset)
       .limit(limit)
   }

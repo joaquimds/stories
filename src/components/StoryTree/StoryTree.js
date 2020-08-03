@@ -1,8 +1,9 @@
 import { useQuery } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
 import * as PropTypes from 'prop-types'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
+import WrittenCountContext from '../../context/WrittenCountContext'
 import NProgress from '../../services/nprogress'
 import Page from '../Page/Page'
 import Sentence from '../Sentence/Sentence'
@@ -13,6 +14,7 @@ const nprogress = new NProgress()
 
 const StoryTree = ({ id }) => {
   const [order, setOrder] = useState('longest')
+  const [writtenCount] = useContext(WrittenCountContext)
   const { data, loading, fetchMore } = useQuery(StoryTree.queries.sentence, {
     variables: {
       id,
@@ -45,24 +47,29 @@ const StoryTree = ({ id }) => {
   }
 
   const onClickLoadMore = () => {
+    const offset = children ? children.length - writtenCount : 0
     fetchMore({
       variables: {
-        offset: children && children.length,
+        offset,
       },
     })
   }
 
   return (
     <div className={styles.container}>
-      <div className={`${styles.half} ${styles.top}`}>
-        <div className={styles.content}>
-          {id && sentence ? (
+      {id !== 'root' ? (
+        <div className={`${styles.half} ${styles.top}`}>
+          <div className={styles.content}>
             <Page sentence={sentence} />
-          ) : (
-            <p className={`${styles.center} ${styles.begin}`}>(begin)</p>
-          )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className={`${styles.half}`}>
+          <div className={styles.content}>
+            <p className={`${styles.center} ${styles.begin}`}>(begin)</p>
+          </div>
+        </div>
+      )}
       <div className={`${styles.half} ${styles.bottom}`}>
         <div className={styles.content}>
           {children ? (
@@ -100,7 +107,7 @@ const StoryTree = ({ id }) => {
                 </div>
               ) : null}
               <div className={styles.write}>
-                <Write parentId={sentence ? sentence.id : null} />
+                <Write parentId={sentence.id} />
               </div>
             </>
           ) : null}

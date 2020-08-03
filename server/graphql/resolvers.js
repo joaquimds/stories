@@ -4,40 +4,44 @@ import { User } from '../models/User'
 export const resolvers = {
   Query: {
     sentence: (parent, { id }) => {
-      return id ? Sentence.query().findById(id) : { id: null }
+      return id === 'root' ? { id } : Sentence.query().findById(id)
     },
   },
   Sentence: {
-    id: ({ id }) => {
-      return id || 'root'
-    },
     content: ({ id, content, authorId }) => {
-      if (!id) {
+      if (id === 'root') {
         return ''
       }
       return authorId ? content : '[deleted]'
     },
-    parents: (sentence) => {
-      return sentence.id ? sentence.getParents() : []
+    parents: async (sentence) => {
+      if (sentence.id === 'root') {
+        return []
+      }
+      const parents = await sentence.getParents()
+      return [{ id: 'root' }, ...parents]
     },
     childCount: (sentence) => {
-      return Sentence.countChildren(sentence.id)
+      const id = sentence.id === 'root' ? null : sentence.id
+      return Sentence.countChildren(id)
     },
     children: (sentence, { order, offset }) => {
-      return Sentence.getChildren(sentence.id, order, offset)
+      const id = sentence.id === 'root' ? null : sentence.id
+      return Sentence.getChildren(id, order, offset)
     },
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null
     },
   },
   Mutation: {
-    addSentenceMutation: async (parent, { content, parentId }, { user }) => {
-      const trimmed = content.trim()
-      if (!user || !trimmed) {
+    addSentenceMutation: async (parent, args, { user }) => {
+      const content = args.content.trim()
+      const parentId = args.parentId === 'root' ? null : args.parentId
+      if (!user || !content) {
         return null
       }
       return Sentence.query().insert({
-        content: trimmed,
+        content,
         parentId,
         authorId: user.id,
       })

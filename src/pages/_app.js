@@ -7,6 +7,7 @@ import Footer from '../components/Footer/Footer'
 import Head from '../components/Head/Head'
 import Navbar from '../components/Navbar/Navbar'
 import UserContext from '../context/UserContext'
+import WrittenCountContext from '../context/WrittenCountContext'
 import NProgress from '../services/nprogress'
 
 const nprogress = new NProgress()
@@ -14,6 +15,7 @@ const nprogress = new NProgress()
 const MyApp = ({ Component, pageProps, user: initialUser }) => {
   const router = useRouter()
   const [user] = useState(initialUser)
+  const writtenCountState = useState(0)
 
   useEffect(() => {
     Router.events.on('routeChangeStart', nprogress.start)
@@ -28,14 +30,16 @@ const MyApp = ({ Component, pageProps, user: initialUser }) => {
 
   return (
     <UserContext.Provider value={user}>
-      <div className={`root root--${router.asPath}`}>
-        <Head />
-        <Navbar />
-        <main className="main">
-          <Component {...pageProps} />
-        </main>
-        <Footer />
-      </div>
+      <WrittenCountContext.Provider value={writtenCountState}>
+        <div className={`root root--${router.asPath}`}>
+          <Head />
+          <Navbar />
+          <main className="main">
+            <Component {...pageProps} />
+          </main>
+          <Footer />
+        </div>
+      </WrittenCountContext.Provider>
     </UserContext.Provider>
   )
 }

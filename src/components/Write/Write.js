@@ -6,6 +6,7 @@ import * as PropTypes from 'prop-types'
 import { useContext, useState } from 'react'
 import { ORDERS } from '../../constants'
 import UserContext from '../../context/UserContext'
+import WrittenCountContext from '../../context/WrittenCountContext'
 import Sentence from '../Sentence/Sentence'
 import StoryTree from '../StoryTree/StoryTree'
 import styles from './Write.module.scss'
@@ -21,6 +22,7 @@ const ADD_SENTENCE_MUTATION = gql`
 
 const Write = ({ parentId }) => {
   const user = useContext(UserContext)
+  const [writtenCount, setWrittenCount] = useContext(WrittenCountContext)
   const [content, setContent] = useState('')
   const [addSentence, { loading }] = useMutation(ADD_SENTENCE_MUTATION)
   const router = useRouter()
@@ -30,17 +32,15 @@ const Write = ({ parentId }) => {
     await addSentence({
       variables: {
         content,
-        parentId: parentId === 'root' ? null : parentId,
+        parentId,
       },
       update(cache, { data: { addSentenceMutation: newSentence } }) {
         setContent('')
         for (const order of ORDERS) {
-          const queryVariables = { order: order.toLowerCase() }
-          if (parentId !== 'root') {
-            queryVariables.id = parentId
-          }
+          const queryVariables = { order: order.toLowerCase(), id: parentId }
           updateCache(cache, queryVariables, newSentence)
         }
+        setWrittenCount(writtenCount + 1)
         return router.push('/[id]', `/${newSentence.id}`)
       },
     })
@@ -79,7 +79,8 @@ const updateCache = (cache, variables, newSentence) => {
       data: {
         sentence: {
           ...sentence,
-          children: [{ ...newSentence, local: true }],
+          childCount: sentence.childCount + 1,
+          children: [newSentence],
         },
       },
     })

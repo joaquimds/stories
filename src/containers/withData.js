@@ -109,8 +109,17 @@ const initApolloClient = (initialState = {}) => {
   return apolloClient
 }
 
-const mergeChildren = (existing = [], incoming = []) => {
-  return [...existing, ...incoming]
+const mergeChildren = (existing = [], incoming = [], { readField }) => {
+  const merged = [...existing]
+  const existingIds = existing.map((e) => readField('id', e))
+  for (const item of incoming) {
+    const id = readField('id', item)
+    if (!existingIds.includes(id)) {
+      merged.push(item)
+      existingIds.push(id)
+    }
+  }
+  return merged
 }
 
 /**
