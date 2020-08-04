@@ -1,13 +1,13 @@
 import { useMutation } from '@apollo/client'
 import gql from 'graphql-tag'
+import NHead from 'next/dist/next-server/lib/head'
+import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useContext } from 'react'
 import UserContext from '../../context/UserContext'
 import Sentence from '../Sentence/Sentence'
 import styles from './Page.module.scss'
-import Head from 'next/head'
-import NHead from 'next/dist/next-server/lib/head'
 
 const DELETE_SENTENCE_MUTATION = gql`
   mutation DeleteSentenceMutation($id: String!) {
@@ -72,6 +72,11 @@ const Page = ({ sentence }) => {
   return (
     <>
       <Head>
+        <meta
+          key="og:url"
+          property="og:url"
+          content={`${process.env.siteUrl}/${sentence.id}`}
+        />
         <meta
           key="og:description"
           property="og:description"

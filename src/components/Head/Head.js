@@ -15,8 +15,8 @@ const Head = () => (
       content={process.env.description}
     />
     <meta key="og:image" property="og:image" content={process.env.shareImage} />
-    <meta key="og:image:width" property="og:image:width" content="192" />
-    <meta key="og:image:height" property="og:image:height" content="192" />
+    <meta key="og:image:width" property="og:image:width" content="512" />
+    <meta key="og:image:height" property="og:image:height" content="512" />
     <meta key="og:type" property="og:type" content="website" />
     <meta key="og:url" property="og:url" content={process.env.siteUrl} />
     <meta
