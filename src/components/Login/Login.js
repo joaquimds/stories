@@ -4,6 +4,7 @@ import styles from './Login.module.scss'
 const MODES = { register: 'Register', login: 'Login' }
 
 const Login = () => {
+  const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState(MODES.login)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -13,6 +14,7 @@ const Login = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault()
+    setLoading(true)
     const body = isRegister
       ? {
           email,
@@ -31,7 +33,9 @@ const Login = () => {
     })
     if (response.ok) {
       window.location.href = '/'
+      return
     }
+    setLoading(false)
   }
   const toggleMode = () => {
     setMode(isRegister ? MODES.login : MODES.register)
@@ -69,7 +73,9 @@ const Login = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button className={`button ${styles.submit}`}>{mode}</button>
+        <button disabled={loading} className={`button ${styles.submit}`}>
+          {mode}
+        </button>
         <button
           type="button"
           className={`link ${styles.toggle}`}

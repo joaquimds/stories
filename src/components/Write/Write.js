@@ -34,14 +34,14 @@ const Write = ({ parentId }) => {
         content,
         parentId,
       },
-      update(cache, { data: { addSentenceMutation: newSentence } }) {
+      async update(cache, { data: { addSentenceMutation: newSentence } }) {
         setContent('')
+        await router.push('/[id]', `/${newSentence.id}`)
         for (const order of ORDERS) {
           const queryVariables = { order: order.toLowerCase(), id: parentId }
           updateCache(cache, queryVariables, newSentence)
         }
         setWrittenCount(writtenCount + 1)
-        return router.push('/[id]', `/${newSentence.id}`)
       },
     })
   }
