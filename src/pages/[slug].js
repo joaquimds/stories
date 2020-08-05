@@ -5,13 +5,13 @@ import withData from '../containers/withData'
 
 const SentencePage = () => {
   const router = useRouter()
-  const { id } = router.query
+  const { slug } = router.query
 
-  if (!id) {
+  if (!slug) {
     return <Error statusCode={404} />
   }
 
-  return <StoryTree id={id} />
+  return <StoryTree slug={slug} />
 }
 
 export default withData(SentencePage, { ssr: true })

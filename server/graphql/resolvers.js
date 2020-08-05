@@ -1,10 +1,33 @@
 import { Sentence } from '../models/Sentence'
+import { Title } from '../models/Title'
 import { User } from '../models/User'
+import { logger } from '../services/logger'
+import { slugify } from '../util/text'
 
 export const resolvers = {
   Query: {
-    sentence: (parent, { id }) => {
-      return id === 'root' ? { id } : Sentence.query().findById(id)
+    sentence: async (parent, { slug }) => {
+      if (!slug) {
+        return { id: 'root' }
+      }
+
+      const title = await Title.query()
+        .where({ slug })
+        .withGraphFetched('sentence')
+        .first()
+      if (title && title.sentence) {
+        const { sentence } = title
+        sentence.title = title.content
+        sentence.slug = title.slug
+        return sentence
+      }
+
+      const isInteger = /^[0-9]+$/.test(slug)
+      if (isInteger) {
+        return Sentence.query().findById(slug)
+      }
+
+      return null
     },
   },
   Sentence: {
@@ -22,12 +45,12 @@ export const resolvers = {
       return [{ id: 'root' }, ...parents]
     },
     childCount: (sentence) => {
-      const id = sentence.id === 'root' ? null : sentence.id
-      return Sentence.countChildren(id)
+      const databaseId = sentence.id === 'root' ? null : sentence.id
+      return Sentence.countChildren(databaseId)
     },
     children: (sentence, { order, offset, exclude }) => {
-      const id = sentence.id === 'root' ? null : sentence.id
-      return Sentence.getChildren(id, order, offset, exclude)
+      const databaseId = sentence.id === 'root' ? null : sentence.id
+      return Sentence.getChildren(databaseId, order, offset, exclude)
     },
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null
@@ -35,36 +58,70 @@ export const resolvers = {
   },
   Mutation: {
     addSentenceMutation: async (parent, args, { user }) => {
-      const content = args.content.trim()
-      const parentId = args.parentId === 'root' ? null : args.parentId
-      if (!user || !content) {
-        return null
-      }
-      return Sentence.query().insert({
-        content,
-        parentId,
-        authorId: user.id,
-      })
-    },
-    deleteSentenceMutation: async (parent, { id }, { user }) => {
-      const failedResponse = { success: false }
-      if (!user) {
-        return failedResponse
-      }
-      const sentence = await Sentence.query()
-        .findById(id)
-        .withGraphFetched('children')
-      if (!sentence) {
-        return failedResponse
-      }
-      if (sentence.children.length) {
-        const updated = await Sentence.query().patchAndFetchById(id, {
-          authorId: null,
+      try {
+        const content = args.content.trim()
+        const parentId = args.parentId === 'root' ? null : args.parentId
+        if (!user || !content) {
+          return { errorCode: 400 }
+        }
+        const sentence = await Sentence.query().insert({
+          content,
+          parentId,
+          authorId: user.id,
         })
-        return { success: true, sentence: updated }
+        return { sentence }
+      } catch (e) {
+        logger.error('%s %o %o', 'addSentenceMutation', args, e.message)
+        return { errorCode: 500 }
       }
-      await Sentence.query().deleteById(id)
-      return { success: true }
+    },
+    saveSentenceMutation: async (parent, args) => {
+      const { id, title } = args
+      try {
+        const sentence = await Sentence.query().findById(id)
+        if (!sentence) {
+          return { errorCode: 404 }
+        }
+        const slug = slugify(title)
+        const existingTitle = await Title.query().where({ slug }).first()
+        if (existingTitle) {
+          return { errorCode: 409 }
+        }
+        await Title.query().insertAndFetch({
+          slug,
+          content: title,
+          sentenceId: sentence.id,
+        })
+        return { slug }
+      } catch (e) {
+        logger.error('%s %o %o', 'saveSentenceMutation', args, e.message)
+        return { errorCode: 500 }
+      }
+    },
+    deleteSentenceMutation: async (parent, args, { user }) => {
+      const { id } = args
+      try {
+        if (!user) {
+          return { errorCode: 400 }
+        }
+        const sentence = await Sentence.query()
+          .findById(id)
+          .withGraphFetched('children')
+        if (!sentence) {
+          return { errorCode: 404 }
+        }
+        if (sentence.children.length) {
+          const updated = await Sentence.query().patchAndFetchById(id, {
+            authorId: null,
+          })
+          return { sentence: updated }
+        }
+        await Sentence.query().deleteById(id)
+        return {}
+      } catch (e) {
+        logger.error('%s %o %o', 'deleteSentenceMutation', args, e.message)
+        return { errorCode: 500 }
+      }
     },
   },
 }

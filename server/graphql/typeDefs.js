@@ -17,16 +17,23 @@ export const typeDefs = gql`
     childCount: Int!
     children(order: Order, offset: Int, exclude: [String]): [Sentence]!
     author: User
+    title: String
+    slug: String
   }
   type Query {
-    sentence(id: String): Sentence
+    sentence(slug: String): Sentence
   }
-  type DeleteResponse {
-    success: Boolean!
+  type SaveResponse {
+    errorCode: Int
+    slug: String
+  }
+  type SentenceResponse {
+    errorCode: Int
     sentence: Sentence
   }
   type Mutation {
-    addSentenceMutation(content: String!, parentId: String): Sentence
-    deleteSentenceMutation(id: String!): DeleteResponse
+    addSentenceMutation(content: String!, parentId: String): SentenceResponse
+    saveSentenceMutation(id: String!, title: String!): SaveResponse
+    deleteSentenceMutation(id: String!): SentenceResponse
   }
 `

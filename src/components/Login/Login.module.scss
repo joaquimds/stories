@@ -11,14 +11,20 @@
 
   input,.submit {
     margin-bottom: spacing(1);
-    padding: spacing(0);
   }
 
-  input {
+  .submit {
+    padding: spacing(0);
   }
 }
 
 .toggle {
   font-weight: bold;
   margin-right: auto;
+}
+
+.error {
+  color: color(red);
+  font-weight: bold;
+  margin-bottom: spacing(0);
 }

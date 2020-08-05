@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import * as PropTypes from 'prop-types'
 import { useContext, useState } from 'react'
-import { ORDERS } from '../../constants'
+import { ERRORS, ORDERS } from '../../constants'
 import UserContext from '../../context/UserContext'
 import WrittenIdsContext from '../../context/WrittenIdsContext'
 import Sentence from '../Sentence/Sentence'
@@ -14,18 +14,26 @@ import styles from './Write.module.scss'
 const ADD_SENTENCE_MUTATION = gql`
   mutation AddSentenceMutation($content: String!, $parentId: String) {
     addSentenceMutation(content: $content, parentId: $parentId) {
-      ...SentenceFragment
+      errorCode
+      sentence {
+        ...SentenceFragment
+      }
     }
   }
   ${Sentence.fragments.sentence}
 `
 
 const Write = ({ parentId }) => {
+  const router = useRouter()
   const user = useContext(UserContext)
   const [writtenIds, setWrittenIds] = useContext(WrittenIdsContext)
   const [content, setContent] = useState('')
+  const [error, setError] = useState(null)
   const [addSentence, { loading }] = useMutation(ADD_SENTENCE_MUTATION)
-  const router = useRouter()
+
+  const setErrorFromCode = (errorCode) => {
+    setError(ERRORS[errorCode] || `Unknown error ${errorCode}`)
+  }
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -34,9 +42,19 @@ const Write = ({ parentId }) => {
         content,
         parentId,
       },
-      async update(cache, { data: { addSentenceMutation: newSentence } }) {
+      async update(
+        cache,
+        {
+          data: {
+            addSentenceMutation: { errorCode, sentence: newSentence },
+          },
+        }
+      ) {
+        if (errorCode) {
+          return setErrorFromCode(errorCode)
+        }
         setContent('')
-        await router.push('/[id]', `/${newSentence.id}`)
+        await router.push('/[slug]', `/${newSentence.id}`)
         for (const order of ORDERS) {
           const queryVariables = { order: order.toLowerCase(), id: parentId }
           updateCache(cache, queryVariables, newSentence)
@@ -63,6 +81,7 @@ const Write = ({ parentId }) => {
           <a className="button">Login to contribute</a>
         </Link>
       )}
+      {error ? <small className={styles.error}>{error}</small> : null}
     </form>
   )
 }

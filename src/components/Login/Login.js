@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ERRORS } from '../../constants'
 import styles from './Login.module.scss'
 
 const MODES = { register: 'Register', login: 'Login' }
@@ -9,12 +10,14 @@ const Login = () => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState(null)
 
   const isRegister = mode === MODES.register
 
   const onSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
     const body = isRegister
       ? {
           email,
@@ -23,19 +26,24 @@ const Login = () => {
         }
       : { email, password }
     const url = `/api/${isRegister ? 'register' : 'login'}`
-    const response = await fetch(url, {
-      method: isRegister ? 'PUT' : 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-    if (response.ok) {
-      window.location.href = '/'
-      return
+    try {
+      const response = await fetch(url, {
+        method: isRegister ? 'PUT' : 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+      if (response.ok) {
+        window.location.href = '/'
+        return
+      }
+      setLoading(false)
+      setError(ERRORS[response.status])
+    } catch (e) {
+      setError('Unknown error')
     }
-    setLoading(false)
   }
   const toggleMode = () => {
     setMode(isRegister ? MODES.login : MODES.register)
@@ -59,7 +67,7 @@ const Login = () => {
         ) : null}
         <label htmlFor="email">Email Address</label>
         <input
-          type="text"
+          type="email"
           id="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -76,6 +84,7 @@ const Login = () => {
         <button disabled={loading} className={`button ${styles.submit}`}>
           {mode}
         </button>
+        {error ? <small className={styles.error}>{error}</small> : null}
         <button
           type="button"
           className={`link ${styles.toggle}`}

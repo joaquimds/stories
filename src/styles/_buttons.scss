@@ -5,9 +5,7 @@ button {
   cursor: pointer;
   font-family: 'EB Garamond', serif;
   font-size: font-size(1);
-
   &:disabled {
-    border: 1px solid color(grey-light);
     color: color(grey-dark);
     cursor: auto;
   }
@@ -24,6 +22,9 @@ button {
     }
     text-decoration: none;
   }
+  &:disabled {
+    border: 1px solid color(grey-light);
+  }
 }
 
 .link {
@@ -36,6 +37,8 @@ button {
   }
 
   &:hover,&:focus {
-    text-decoration: underline;
+    &:not(:disabled) {
+      text-decoration: underline;
+    }
   }
 }

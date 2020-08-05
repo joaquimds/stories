@@ -12,12 +12,12 @@ import styles from './StoryTree.module.scss'
 
 const nprogress = new NProgress()
 
-const StoryTree = ({ id }) => {
+const StoryTree = ({ slug }) => {
   const [order, setOrder] = useState('longest')
   const [writtenIds] = useContext(WrittenIdsContext)
   const { data, loading, fetchMore } = useQuery(StoryTree.queries.sentence, {
     variables: {
-      id,
+      slug,
       order,
     },
   })
@@ -61,7 +61,7 @@ const StoryTree = ({ id }) => {
 
   return (
     <div className={styles.container}>
-      {id !== 'root' ? (
+      {slug ? (
         <div className={`${styles.half} ${styles.top}`}>
           <div className={styles.content}>
             <Page sentence={sentence} />
@@ -133,13 +133,18 @@ const buttonClass = (order, current) => {
 }
 
 StoryTree.propTypes = {
-  id: PropTypes.string,
+  slug: PropTypes.string,
 }
 
 StoryTree.queries = {
   sentence: gql`
-    query Sentence($id: String, $order: Order, $offset: Int, $exclude: [String]) {
-      sentence(id: $id) {
+    query Sentence(
+      $slug: String
+      $order: Order
+      $offset: Int
+      $exclude: [String]
+    ) {
+      sentence(slug: $slug) {
         ...SentenceFragment
         parents {
           ...SentenceFragment

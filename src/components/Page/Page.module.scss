@@ -2,9 +2,26 @@
 
 .content {
   font-size: font-size(2);
+  margin-bottom: spacing(1);
+}
+
+.error {
+  color: color(red);
+  font-weight: bold;
+}
+
+.actions {
+  margin-left: auto;
 }
 
 .delete {
   color: color(red);
-  margin: spacing(1) 0 0 auto;
+  margin-left: spacing(1);
+}
+
+.label {
+}
+
+.save {
+  color: color(green);
 }

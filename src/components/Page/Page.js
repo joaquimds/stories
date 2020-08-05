@@ -1,18 +1,27 @@
 import { useMutation } from '@apollo/client'
 import gql from 'graphql-tag'
-import NHead from 'next/dist/next-server/lib/head'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
+import { ERRORS } from '../../constants'
 import UserContext from '../../context/UserContext'
 import Sentence from '../Sentence/Sentence'
 import styles from './Page.module.scss'
 
+const SAVE_SENTENCE_MUTATION = gql`
+  mutation SaveSentenceMutation($id: String!, $title: String!) {
+    saveSentenceMutation(id: $id, title: $title) {
+      errorCode
+      slug
+    }
+  }
+`
+
 const DELETE_SENTENCE_MUTATION = gql`
   mutation DeleteSentenceMutation($id: String!) {
     deleteSentenceMutation(id: $id) {
-      success
+      errorCode
       sentence {
         ...SentenceFragment
       }
@@ -22,24 +31,57 @@ const DELETE_SENTENCE_MUTATION = gql`
 `
 
 const Page = ({ sentence }) => {
-  const user = useContext(UserContext)
   const router = useRouter()
+  const user = useContext(UserContext)
+
+  const [isSaving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [title, setTitle] = useState('')
+
   const [deleteSentence, { loading }] = useMutation(DELETE_SENTENCE_MUTATION, {
     variables: { id: sentence.id },
   })
+
+  const [saveSentence, { loading: saveLoading }] = useMutation(
+    SAVE_SENTENCE_MUTATION
+  )
+
   const isAuthor = user && sentence.author && sentence.author.id === user.id
+  const setErrorFromCode = (errorCode) => {
+    setError(ERRORS[errorCode] || `Unknown error ${errorCode}`)
+  }
+
+  const onClickSave = async () => {
+    await saveSentence({
+      variables: { id: sentence.id, title },
+      update(
+        _,
+        {
+          data: {
+            saveSentenceMutation: { errorCode, slug },
+          },
+        }
+      ) {
+        if (errorCode) {
+          return setErrorFromCode(errorCode)
+        }
+        return router.push('/[slug]', `/${slug}`)
+      },
+    })
+  }
+
   const onClickDelete = async () => {
     await deleteSentence({
       async update(
         cache,
         {
           data: {
-            deleteSentenceMutation: { success, sentence: updated },
+            deleteSentenceMutation: { errorCode, sentence: updated },
           },
         }
       ) {
-        if (!success) {
-          return
+        if (errorCode) {
+          return setErrorFromCode(errorCode)
         }
         if (updated) {
           return cache.writeFragment({
@@ -65,10 +107,11 @@ const Page = ({ sentence }) => {
         if (parent.id === 'root') {
           return router.push('/')
         }
-        return router.push('/[id]', `/${parent.id}`)
+        return router.push('/[slug]', `/${parent.id}`)
       },
     })
   }
+
   return (
     <>
       <Head>
@@ -88,26 +131,69 @@ const Page = ({ sentence }) => {
           content={sentence.content}
         />
       </Head>
+      {sentence.title ? <h1>{sentence.title}</h1> : null}
       <p>
         {sentence.parents.map((p) => (
           <span key={p.id}>
-            <Link href="/[id]" as={`/${p.id}`}>
+            <Link href="/[slug]" as={`/${p.slug || p.id}`}>
               <a>{p.content}</a>
             </Link>{' '}
           </span>
         ))}
       </p>
       <p className={styles.content}>{sentence.content}</p>
-      {isAuthor ? (
-        <button
-          type="button"
-          onClick={onClickDelete}
-          disabled={loading}
-          className={`link ${styles.delete}`}
-        >
-          delete
-        </button>
-      ) : null}
+      {isSaving ? (
+        <>
+          <label htmlFor="title" className={styles.label}>
+            Title
+          </label>
+          <input
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <div className={styles.actions}>
+            <button
+              type="button"
+              onClick={onClickSave}
+              disabled={saveLoading || !title}
+              className={`link ${styles.save}`}
+            >
+              save
+            </button>
+            <button
+              type="button"
+              onClick={() => setSaving(false)}
+              disabled={loading}
+              className={`link ${styles.delete}`}
+            >
+              cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className={styles.actions}>
+          <button
+            type="button"
+            onClick={() => setSaving(true)}
+            disabled={saveLoading}
+            className={`link ${styles.save}`}
+          >
+            save
+          </button>
+          {isAuthor ? (
+            <button
+              type="button"
+              onClick={onClickDelete}
+              disabled={loading}
+              className={`link ${styles.delete}`}
+            >
+              delete
+            </button>
+          ) : null}
+        </div>
+      )}
+      {error ? <small className={styles.error}>{error}</small> : null}
     </>
   )
 }

@@ -131,6 +131,12 @@ const createApolloClient = (initialState = {}) => {
     typePolicies: {
       Sentence: {
         fields: {
+          title: {
+            merge: (existing, incoming) => incoming || existing || null,
+          },
+          slug: {
+            merge: (existing, incoming) => incoming || existing || null,
+          },
           children: {
             keyArgs: ['order'],
             merge: mergeChildren,
