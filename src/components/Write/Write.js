@@ -6,7 +6,7 @@ import * as PropTypes from 'prop-types'
 import { useContext, useState } from 'react'
 import { ORDERS } from '../../constants'
 import UserContext from '../../context/UserContext'
-import WrittenCountContext from '../../context/WrittenCountContext'
+import WrittenIdsContext from '../../context/WrittenIdsContext'
 import Sentence from '../Sentence/Sentence'
 import StoryTree from '../StoryTree/StoryTree'
 import styles from './Write.module.scss'
@@ -22,7 +22,7 @@ const ADD_SENTENCE_MUTATION = gql`
 
 const Write = ({ parentId }) => {
   const user = useContext(UserContext)
-  const [writtenCount, setWrittenCount] = useContext(WrittenCountContext)
+  const [writtenIds, setWrittenIds] = useContext(WrittenIdsContext)
   const [content, setContent] = useState('')
   const [addSentence, { loading }] = useMutation(ADD_SENTENCE_MUTATION)
   const router = useRouter()
@@ -41,7 +41,7 @@ const Write = ({ parentId }) => {
           const queryVariables = { order: order.toLowerCase(), id: parentId }
           updateCache(cache, queryVariables, newSentence)
         }
-        setWrittenCount(writtenCount + 1)
+        setWrittenIds([...writtenIds, newSentence.id])
       },
     })
   }

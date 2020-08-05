@@ -3,7 +3,7 @@ import gql from 'graphql-tag'
 import * as PropTypes from 'prop-types'
 import { useContext, useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
-import WrittenCountContext from '../../context/WrittenCountContext'
+import WrittenIdsContext from '../../context/WrittenIdsContext'
 import NProgress from '../../services/nprogress'
 import Page from '../Page/Page'
 import Sentence from '../Sentence/Sentence'
@@ -14,7 +14,7 @@ const nprogress = new NProgress()
 
 const StoryTree = ({ id }) => {
   const [order, setOrder] = useState('longest')
-  const [writtenCount] = useContext(WrittenCountContext)
+  const [writtenIds] = useContext(WrittenIdsContext)
   const { data, loading, fetchMore } = useQuery(StoryTree.queries.sentence, {
     variables: {
       id,
@@ -47,10 +47,14 @@ const StoryTree = ({ id }) => {
   }
 
   const onClickLoadMore = () => {
-    const offset = children ? children.length - writtenCount : 0
+    const exclude = writtenIds.filter((id) => {
+      return children && children.some((c) => c.id === id)
+    })
+    const offset = children ? children.length - exclude.length : 0
     fetchMore({
       variables: {
         offset,
+        exclude,
       },
     })
   }
@@ -134,14 +138,14 @@ StoryTree.propTypes = {
 
 StoryTree.queries = {
   sentence: gql`
-    query Sentence($id: String, $order: Order, $offset: Int) {
+    query Sentence($id: String, $order: Order, $offset: Int, $exclude: [String]) {
       sentence(id: $id) {
         ...SentenceFragment
         parents {
           ...SentenceFragment
         }
         childCount
-        children(order: $order, offset: $offset) {
+        children(order: $order, offset: $offset, exclude: $exclude) {
           ...SentenceFragment
         }
       }

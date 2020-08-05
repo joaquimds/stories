@@ -15,7 +15,7 @@ export const typeDefs = gql`
     content: String!
     parents: [Sentence]!
     childCount: Int!
-    children(order: Order, offset: Int): [Sentence]!
+    children(order: Order, offset: Int, exclude: [String]): [Sentence]!
     author: User
   }
   type Query {

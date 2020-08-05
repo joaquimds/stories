@@ -7,7 +7,7 @@ import Footer from '../components/Footer/Footer'
 import Head from '../components/Head/Head'
 import Navbar from '../components/Navbar/Navbar'
 import UserContext from '../context/UserContext'
-import WrittenCountContext from '../context/WrittenCountContext'
+import WrittenIdsContext from '../context/WrittenIdsContext'
 import NProgress from '../services/nprogress'
 
 const nprogress = new NProgress()
@@ -15,7 +15,7 @@ const nprogress = new NProgress()
 const MyApp = ({ Component, pageProps, user: initialUser }) => {
   const router = useRouter()
   const [user] = useState(initialUser)
-  const writtenCountState = useState(0)
+  const writtenIdsState = useState([])
 
   useEffect(() => {
     Router.events.on('routeChangeStart', nprogress.start)
@@ -30,7 +30,7 @@ const MyApp = ({ Component, pageProps, user: initialUser }) => {
 
   return (
     <UserContext.Provider value={user}>
-      <WrittenCountContext.Provider value={writtenCountState}>
+      <WrittenIdsContext.Provider value={writtenIdsState}>
         <div className={`root root--${router.asPath}`}>
           <Head />
           <Navbar />
@@ -39,7 +39,7 @@ const MyApp = ({ Component, pageProps, user: initialUser }) => {
           </main>
           <Footer />
         </div>
-      </WrittenCountContext.Provider>
+      </WrittenIdsContext.Provider>
     </UserContext.Provider>
   )
 }

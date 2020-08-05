@@ -25,9 +25,9 @@ export const resolvers = {
       const id = sentence.id === 'root' ? null : sentence.id
       return Sentence.countChildren(id)
     },
-    children: (sentence, { order, offset }) => {
+    children: (sentence, { order, offset, exclude }) => {
       const id = sentence.id === 'root' ? null : sentence.id
-      return Sentence.getChildren(id, order, offset)
+      return Sentence.getChildren(id, order, offset, exclude)
     },
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null
