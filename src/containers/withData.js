@@ -109,19 +109,6 @@ const initApolloClient = (initialState = {}) => {
   return apolloClient
 }
 
-const mergeChildren = (existing = [], incoming = [], { readField }) => {
-  const merged = [...existing]
-  const existingIds = existing.map((e) => readField('id', e))
-  for (const item of incoming) {
-    const id = readField('id', item)
-    if (!existingIds.includes(id)) {
-      merged.push(item)
-      existingIds.push(id)
-    }
-  }
-  return merged
-}
-
 /**
  * Creates and configures the ApolloClient
  * @param  {Object} [initialState={}]
@@ -132,10 +119,10 @@ const createApolloClient = (initialState = {}) => {
       Sentence: {
         fields: {
           title: {
-            merge: (existing, incoming) => incoming || existing || null,
+            merge: mergeCoalesce,
           },
           slug: {
-            merge: (existing, incoming) => incoming || existing || null,
+            merge: mergeCoalesce,
           },
           children: {
             keyArgs: ['order'],
@@ -162,5 +149,18 @@ const createApolloClient = (initialState = {}) => {
     }),
   })
 }
+
+const mergeChildren = (existing = [], incoming = [], { readField }) => {
+  const merged = [...existing]
+  for (const item of incoming) {
+    const id = readField('id', item)
+    if (!merged.some((ref) => readField('id', ref) === id)) {
+      merged.push(item)
+    }
+  }
+  return merged
+}
+
+const mergeCoalesce = (existing, incoming) => incoming || existing || null
 
 export default withData

@@ -55,10 +55,7 @@ const Write = ({ parentId }) => {
         }
         setContent('')
         await router.push('/[slug]', `/${newSentence.id}`)
-        for (const order of ORDERS) {
-          const queryVariables = { order: order.toLowerCase(), id: parentId }
-          updateCache(cache, queryVariables, newSentence)
-        }
+        updateCache(cache, parentId, newSentence)
         setWrittenIds([...writtenIds, newSentence.id])
       },
     })
@@ -86,25 +83,22 @@ const Write = ({ parentId }) => {
   )
 }
 
-const updateCache = (cache, variables, newSentence) => {
-  try {
-    const { sentence } = cache.readQuery({
-      query: StoryTree.queries.sentence,
-      variables,
-    })
-    return cache.writeQuery({
-      query: StoryTree.queries.sentence,
-      variables,
-      data: {
-        sentence: {
-          ...sentence,
-          childCount: sentence.childCount + 1,
-          children: [newSentence],
-        },
+const updateCache = (cache, parentId, newSentence) => {
+  const newSentenceRef = cache.writeFragment({
+    data: newSentence,
+    fragment: Sentence.fragments.sentence,
+  })
+  cache.modify({
+    id: `Sentence:${parentId}`,
+    fields: {
+      childCount(count) {
+        return count && count > 0 ? count + 1 : 1
       },
-    })
-    // eslint-disable-next-line no-empty
-  } catch (e) {}
+      children(childRefs) {
+        return [...childRefs, newSentenceRef]
+      },
+    },
+  })
 }
 
 Write.propTypes = {
