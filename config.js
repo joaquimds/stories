@@ -8,6 +8,11 @@ module.exports = {
     uri: process.env.PG_URI,
   },
   dev: process.env.NODE_ENV === 'development',
+  email: {
+    host: 'mail.gandi.net',
+    user: 'stories@joaquimdsouza.com',
+    pass: process.env.SMTP_PASSWORD,
+  },
   logger: {
     level: process.env.LOG_LEVEL || 'info',
   },
@@ -20,5 +25,8 @@ module.exports = {
   session: {
     secret: process.env.SESSION_SECRET,
     secure: process.env.SESSION_SECURE !== 'false',
+  },
+  site: {
+    url: process.env.SITE_URL || 'https://stories.joaquimdsouza.com',
   },
 }

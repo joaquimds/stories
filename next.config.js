@@ -1,8 +1,10 @@
+const config = require('./config')
+
 module.exports = {
   env: {
     title: 'Stories',
     description: 'Story Tree',
-    siteUrl: 'https://stories.joaquimdsouza.com',
-    shareImage: 'https://stories.joaquimdsouza.com/tree.jpg',
+    siteUrl: config.site.url,
+    shareImage: `${config.site.url}/tree.jpg`,
   },
 }

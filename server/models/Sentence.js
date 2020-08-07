@@ -44,8 +44,8 @@ export class Sentence extends Model {
   }
 
   static async countChildren(parentId) {
-    const countQuery = await Sentence.query().where({ parentId }).count()
-    return Number(countQuery[0].count)
+    const countQuery = await Sentence.query().findOne({ parentId }).count()
+    return Number(countQuery.count)
   }
 
   static async getChildren(

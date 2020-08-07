@@ -12,9 +12,8 @@ export const resolvers = {
       }
 
       const title = await Title.query()
-        .where({ slug })
+        .findOne({ slug })
         .withGraphFetched('sentence')
-        .first()
       if (title && title.sentence) {
         const { sentence } = title
         sentence.title = title.content
@@ -83,7 +82,7 @@ export const resolvers = {
           return { errorCode: 404 }
         }
         const slug = slugify(title)
-        const existingTitle = await Title.query().where({ slug }).first()
+        const existingTitle = await Title.query().findOne({ slug })
         if (existingTitle) {
           return { errorCode: 409 }
         }

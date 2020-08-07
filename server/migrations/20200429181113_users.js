@@ -4,6 +4,7 @@ exports.up = (knex) => {
     table.string('email').unique().notNullable()
     table.string('name').notNullable()
     table.string('passwordHash').notNullable()
+    table.string('resetToken')
   })
 }
 

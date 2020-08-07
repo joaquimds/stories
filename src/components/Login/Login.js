@@ -2,33 +2,29 @@ import { useState } from 'react'
 import { ERRORS } from '../../constants'
 import styles from './Login.module.scss'
 
-const MODES = { register: 'Register', login: 'Login' }
+const MODES = {
+  register: 'Register',
+  login: 'Login',
+  forgotPassword: 'Forgot Password',
+}
 
 const Login = () => {
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState(MODES.login)
+  const [sentEmail, setSentEmail] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
 
-  const isRegister = mode === MODES.register
-
   const onSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const body = isRegister
-      ? {
-          email,
-          password,
-          name,
-        }
-      : { email, password }
-    const url = `/api/${isRegister ? 'register' : 'login'}`
+    const { path, body } = getRequestParams(mode, { name, email, password })
     try {
-      const response = await fetch(url, {
-        method: isRegister ? 'PUT' : 'POST',
+      const response = await fetch(path, {
+        method: mode === MODES.register ? 'PUT' : 'POST',
         credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
@@ -36,8 +32,11 @@ const Login = () => {
         body: JSON.stringify(body),
       })
       if (response.ok) {
-        window.location.href = '/'
-        return
+        if (mode !== MODES.forgotPassword) {
+          window.location.href = '/'
+          return
+        }
+        return setSentEmail(true)
       }
       setLoading(false)
       setError(ERRORS[response.status])
@@ -45,15 +44,28 @@ const Login = () => {
       setError('Unknown error')
     }
   }
-  const toggleMode = () => {
-    setMode(isRegister ? MODES.login : MODES.register)
+
+  const changeMode = (nextMode) => {
+    setError(null)
+    setMode(nextMode)
+  }
+
+  const oppositeMode = mode === MODES.login ? MODES.register : MODES.login
+
+  if (sentEmail) {
+    return (
+      <div className={styles.login}>
+        <h1>{mode}</h1>
+        <p>Please check your email for further instructions.</p>
+      </div>
+    )
   }
 
   return (
     <div className={styles.login}>
       <h1>{mode}</h1>
-      <form onSubmit={onSubmit} className={styles.form}>
-        {isRegister ? (
+      <form onSubmit={onSubmit} className="form">
+        {mode === MODES.register ? (
           <>
             <label htmlFor="name">Pen Name</label>
             <input
@@ -73,28 +85,51 @@ const Login = () => {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <label htmlFor="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button disabled={loading} className={`button ${styles.submit}`}>
-          {mode}
+        {mode !== MODES.forgotPassword ? (
+          <>
+            <label htmlFor="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </>
+        ) : null}
+        <button disabled={loading} className="button submit">
+          {mode === MODES.forgotPassword ? 'Submit' : mode}
         </button>
         {error ? <small className={styles.error}>{error}</small> : null}
         <button
           type="button"
           className={`link ${styles.toggle}`}
-          onClick={() => toggleMode()}
+          onClick={() => changeMode(oppositeMode)}
         >
-          {isRegister ? MODES.login : MODES.register}
+          {oppositeMode}
         </button>
+        {mode !== MODES.forgotPassword ? (
+          <button
+            type="button"
+            className={`link ${styles['forgot-password']}`}
+            onClick={() => changeMode(MODES.forgotPassword)}
+          >
+            Forgot password
+          </button>
+        ) : null}
       </form>
     </div>
   )
+}
+
+const getRequestParams = (mode, { name, email, password }) => {
+  if (mode === MODES.forgotPassword) {
+    return { path: '/api/forgot-password', body: { email } }
+  }
+  if (mode === MODES.login) {
+    return { path: '/api/login', body: { email, password } }
+  }
+  return { path: '/api/register', body: { name, email, password } }
 }
 
 export default Login

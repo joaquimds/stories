@@ -28,10 +28,11 @@ const MyApp = ({ Component, pageProps, user: initialUser }) => {
     }
   }, [])
 
+  const path = router.asPath.split('#')[0]
   return (
     <UserContext.Provider value={user}>
       <WrittenIdsContext.Provider value={writtenIdsState}>
-        <div className={`root root--${router.asPath}`}>
+        <div className={`root root--${path}`}>
           <Head />
           <Navbar />
           <main className="main">

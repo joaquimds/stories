@@ -4,5 +4,6 @@ export const ERRORS = {
   401: 'Bad credentials',
   404: 'Not found',
   409: 'Duplicate',
+  498: 'Expired',
   500: 'Error',
 }

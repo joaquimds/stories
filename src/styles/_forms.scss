@@ -1,5 +1,11 @@
 @import "functions";
 
-input {
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+input,.submit {
+  margin-bottom: spacing(1);
   padding: spacing(0);
 }
