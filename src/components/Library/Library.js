@@ -24,9 +24,7 @@ const Library = () => {
       />
       {hasData ? (
         hasResults ? (
-          <ul className={styles.list}>
-            {data.stories.map(renderSentence)}
-          </ul>
+          <ul className={styles.list}>{data.stories.map(renderSentence)}</ul>
         ) : (
           <p className={styles.info}>(no results)</p>
         )

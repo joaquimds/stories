@@ -59,7 +59,7 @@ const Reset = () => {
         >
           Submit
         </button>
-        {error ? <small className={styles.error}>{error}</small> : null}
+        {error ? <small className="error">{error}</small> : null}
       </form>
     </div>
   )

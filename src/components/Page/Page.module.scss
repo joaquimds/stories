@@ -10,6 +10,11 @@
   font-weight: bold;
 }
 
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
 .actions {
   margin-left: auto;
 }

@@ -5,6 +5,8 @@ exports.seed = async (knex) => {
   await knex('sentences').insert({
     content: "The hills across the valley of the Ebro' were long and white.",
     authorId: 1,
+    title: 'Beginning',
+    slug: slugify('Beginning'),
   })
   await knex('sentences').insert({
     content:
@@ -29,7 +31,7 @@ exports.seed = async (knex) => {
       'It was very hot and the express from Barcelona would come in forty minutes.',
     authorId: 1,
     parentId: 3,
-    title: 'Hills Like White Elephants',
+    title: 'Hills Like 100% Elephants',
     slug: slugify('Hills Like White Elephants'),
   })
   for (let i = 0; i < 10; i++) {

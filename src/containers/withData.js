@@ -116,6 +116,23 @@ const initApolloClient = (initialState = {}) => {
 const createApolloClient = (initialState = {}) => {
   const cache = new InMemoryCache({
     typePolicies: {
+      Query: {
+        fields: {
+          mySentences: {
+            keyArgs: ['search'],
+            merge: (existing = {}, incoming = {}, options) => {
+              return {
+                ...incoming,
+                sentences: mergeChildren(
+                  existing.sentences,
+                  incoming.sentences,
+                  options
+                ),
+              }
+            },
+          },
+        },
+      },
       Sentence: {
         fields: {
           children: {

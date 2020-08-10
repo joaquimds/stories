@@ -1,8 +1,9 @@
-import { raw } from 'objection'
 import { Sentence } from '../models/Sentence'
 import { User } from '../models/User'
 import { logger } from '../services/logger'
 import { slugify } from '../util/text'
+
+const LIMIT = 10
 
 export const resolvers = {
   Query: {
@@ -24,17 +25,47 @@ export const resolvers = {
       return null
     },
     stories: async (parent, { search }) => {
-      const limit = 100
       if (!search) {
-        return Sentence.query().whereNotNull('title').limit(limit)
+        return Sentence.query().whereNotNull('title').limit(LIMIT)
       }
-      return Sentence.query()
-        .with('t', raw('select plainto_tsquery(?) as q', search))
-        .whereRaw('numnode(q) > 0')
-        .andWhereRaw(
-          "to_tsvector('english', title) @@ to_tsquery(q::text || ':*')"
-        )
-        .from(raw('sentences,t'))
+      const escapedSearch = search.replace(/%/g, '\\%')
+      return Sentence.query().where('title', 'ilike', `%${escapedSearch}%`)
+    },
+    mySentences: async (
+      parent,
+      { search, offset = 0, exclude = [] },
+      { user }
+    ) => {
+      if (!user) {
+        return []
+      }
+      if (!search) {
+        const countQuery = await Sentence.query()
+          .whereNotIn('id', exclude)
+          .andWhere({ authorId: user.id })
+          .count()
+          .first()
+        const sentences = await User.relatedQuery('sentences')
+          .for(user.id)
+          .whereNotIn('id', exclude)
+          .offset(offset)
+          .limit(LIMIT)
+        return { count: countQuery.count, sentences }
+      }
+      const escapedSearch = search.replace(/%/g, '\\%')
+      const countQuery = await Sentence.query()
+        .whereNotIn('id', exclude)
+        .andWhere({ authorId: user.id })
+        .andWhere('content', 'ilike', `%${escapedSearch}%`)
+        .count()
+        .first()
+      const sentences = await Sentence.query()
+        .whereNotIn('id', exclude)
+        .andWhere({ authorId: user.id })
+        .andWhere('content', 'ilike', `%${escapedSearch}%`)
+        .offset(offset)
+        .limit(LIMIT)
+      return { count: countQuery.count, sentences }
     },
   },
   Sentence: {

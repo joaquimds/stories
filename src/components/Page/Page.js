@@ -51,7 +51,8 @@ const Page = ({ sentence }) => {
     setError(ERRORS[errorCode] || `Unknown error ${errorCode}`)
   }
 
-  const onClickSave = async () => {
+  const onSubmitSave = async (e) => {
+    e.preventDefault()
     await saveSentence({
       variables: { id: sentence.id, title },
       update(
@@ -104,6 +105,22 @@ const Page = ({ sentence }) => {
             },
           },
         })
+        cache.modify({
+          id: 'ROOT_QUERY',
+          fields: {
+            mySentences(mySentences, { readField }) {
+              if (!mySentences) {
+                return null
+              }
+              return {
+                count: mySentences.count > 0 ? mySentences.count - 1 : 0,
+                sentences: mySentences.sentences.filter(
+                  (sentenceRef) => readField('id', sentenceRef) !== sentence.id
+                ),
+              }
+            },
+          },
+        })
         if (!parent.id) {
           return router.push('/')
         }
@@ -111,9 +128,6 @@ const Page = ({ sentence }) => {
       },
     })
   }
-
-  const { slug } = router.query
-  const highlightContent = slug !== sentence.slug
 
   return (
     <>
@@ -135,21 +149,17 @@ const Page = ({ sentence }) => {
         />
       </Head>
       {sentence.title ? <h1>{sentence.title}</h1> : null}
-      <p>
-        {sentence.parents.map((p) => (
-          <span key={p.id}>
-            <Link href="/[slug]" as={`/${p.slug || p.id}`}>
-              <a>{p.content}</a>
-            </Link>{' '}
-          </span>
-        ))}
-        {!highlightContent ? <span>{sentence.content}</span> : null}
-      </p>
-      {highlightContent ? (
-        <p className={styles.content}>{sentence.content}</p>
-      ) : null}
+      {sentence.parents.map((p) => (
+        <p key={p.id} className={styles.content}>
+          <Link href="/[slug]" as={`/${p.slug || p.id}`}>
+            <a>{p.content}</a>
+          </Link>{' '}
+        </p>
+      ))}
+      <p className={styles.content}>{sentence.content}</p>
+      {renderAuthors(sentence)}
       {isSaving ? (
-        <>
+        <form onSubmit={onSubmitSave} className={styles.form}>
           <label htmlFor="title" className={styles.label}>
             Title
           </label>
@@ -160,8 +170,6 @@ const Page = ({ sentence }) => {
           />
           <div className={styles.actions}>
             <button
-              type="button"
-              onClick={onClickSave}
               disabled={saveLoading || !title}
               className={`link ${styles.save}`}
             >
@@ -176,7 +184,7 @@ const Page = ({ sentence }) => {
               cancel
             </button>
           </div>
-        </>
+        </form>
       ) : isAuthor ? (
         <div className={styles.actions}>
           <button
@@ -197,8 +205,36 @@ const Page = ({ sentence }) => {
           </button>
         </div>
       ) : null}
-      {error ? <small className={styles.error}>{error}</small> : null}
+      {error ? <small className="error">{error}</small> : null}
     </>
+  )
+}
+
+const renderAuthors = (sentence) => {
+  const authors = [sentence, ...sentence.parents]
+    .map((s) => s.author)
+    .filter(Boolean)
+  const authorCounts = {}
+  for (const a of authors) {
+    if (!authorCounts[a.name]) {
+      authorCounts[a.name] = 0
+    }
+    authorCounts[a.name]++
+  }
+  const authorNames = Object.keys(authorCounts)
+  if (authorNames.length === 0) {
+    return null
+  }
+  if (authorNames.length === 1) {
+    return <p>By {authorNames[0]}</p>
+  }
+
+  authorNames.sort((a, b) => (authorCounts[a] > authorCounts[b] ? -1 : 1))
+  const last = authorNames.pop()
+  return (
+    <p>
+      By {authorNames.join(', ')} and {last}
+    </p>
   )
 }
 

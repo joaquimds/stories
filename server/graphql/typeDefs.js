@@ -20,9 +20,14 @@ export const typeDefs = gql`
     title: String
     slug: String
   }
+  type SentenceList {
+    count: Int!
+    sentences: [Sentence]
+  }
   type Query {
     sentence(slug: String): Sentence
-    stories(search: String): [Sentence]
+    stories(search: String): [Sentence]!
+    mySentences(search: String, offset: Int, exclude: [String]): SentenceList!
   }
   type SaveResponse {
     errorCode: Int

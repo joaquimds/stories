@@ -77,7 +77,9 @@ const Write = ({ parentId }) => {
           <a className="button">Login to contribute</a>
         </Link>
       )}
-      {error ? <small className={styles.error}>{error}</small> : null}
+      {error ? (
+        <small className={`error ${styles.error}`}>{error}</small>
+      ) : null}
     </form>
   )
 }
@@ -95,6 +97,20 @@ const updateCache = (cache, parentId, newSentence) => {
       },
       children(childRefs) {
         return [...childRefs, newSentenceRef]
+      },
+    },
+  })
+  cache.modify({
+    id: 'ROOT_QUERY',
+    fields: {
+      mySentences(mySentences) {
+        if (!mySentences) {
+          return null
+        }
+        return {
+          count: mySentences.count + 1,
+          sentences: [...mySentences.sentences, newSentenceRef],
+        }
       },
     },
   })

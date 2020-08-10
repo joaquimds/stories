@@ -7,7 +7,7 @@ const Sentence = ({ sentence }) => {
   return (
     <div className={styles.card}>
       <p>
-        <Link href="/[slug]" as={`/${sentence.id}`}>
+        <Link href="/[slug]" as={sentence.slug || sentence.id}>
           <a className={styles.link}>{sentence.content}</a>
         </Link>
       </p>
@@ -17,6 +17,7 @@ const Sentence = ({ sentence }) => {
 const SentenceType = {
   id: PropTypes.string,
   content: PropTypes.string,
+  slug: PropTypes.string,
   author: PropTypes.shape({
     id: PropTypes.string,
     name: PropTypes.string,
@@ -26,6 +27,7 @@ Sentence.propTypes = {
   sentence: PropTypes.shape({
     id: PropTypes.string,
     content: PropTypes.string,
+    slug: PropTypes.string,
     children: PropTypes.arrayOf(PropTypes.shape(SentenceType)),
     parent: PropTypes.shape(SentenceType),
   }),

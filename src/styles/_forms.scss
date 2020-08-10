@@ -9,3 +9,8 @@ input,.submit {
   margin-bottom: spacing(1);
   padding: spacing(0);
 }
+
+.error {
+  color: color(red);
+  font-weight: bold;
+}

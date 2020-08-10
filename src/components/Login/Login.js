@@ -100,7 +100,9 @@ const Login = () => {
         <button disabled={loading} className="button submit">
           {mode === MODES.forgotPassword ? 'Submit' : mode}
         </button>
-        {error ? <small className={styles.error}>{error}</small> : null}
+        {error ? (
+          <small className={`error ${styles.error}`}>{error}</small>
+        ) : null}
         <button
           type="button"
           className={`link ${styles.toggle}`}
