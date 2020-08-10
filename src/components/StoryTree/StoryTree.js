@@ -1,5 +1,6 @@
 import { useQuery } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
+import Link from 'next/dist/client/link'
 import * as PropTypes from 'prop-types'
 import { useContext, useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
@@ -15,7 +16,7 @@ const nprogress = new NProgress()
 const StoryTree = ({ slug }) => {
   const [order, setOrder] = useState('longest')
   const [writtenIds] = useContext(WrittenIdsContext)
-  const { data, loading, fetchMore } = useQuery(StoryTree.queries.sentence, {
+  const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
       slug,
       order,
@@ -61,19 +62,21 @@ const StoryTree = ({ slug }) => {
 
   return (
     <div className={styles.container}>
-      {slug ? (
-        <div className={`${styles.half} ${styles.top}`}>
-          <div className={styles.content}>
+      <div className={`${styles.half} ${styles.top}`}>
+        <div className={styles.content}>
+          {slug ? (
             <Page sentence={sentence} />
-          </div>
+          ) : (
+            <p className={styles.begin}>
+              (choose a beginning, start a new story, or{' '}
+              <Link href="/library">
+                <a>visit the library</a>
+              </Link>
+              )
+            </p>
+          )}
         </div>
-      ) : (
-        <div className={`${styles.half}`}>
-          <div className={styles.content}>
-            <p className={`${styles.center} ${styles.begin}`}>(begin)</p>
-          </div>
-        </div>
-      )}
+      </div>
       <div className={`${styles.half} ${styles.bottom}`}>
         <div className={styles.content}>
           {children ? (
@@ -106,7 +109,7 @@ const StoryTree = ({ slug }) => {
                     className="link"
                     onClick={onClickLoadMore}
                   >
-                    (Load More)
+                    (load more)
                   </button>
                 </div>
               ) : null}
@@ -136,27 +139,25 @@ StoryTree.propTypes = {
   slug: PropTypes.string,
 }
 
-StoryTree.queries = {
-  sentence: gql`
-    query Sentence(
-      $slug: String
-      $order: Order
-      $offset: Int
-      $exclude: [String]
-    ) {
-      sentence(slug: $slug) {
+StoryTree.query = gql`
+  query Sentence(
+    $slug: String
+    $order: Order
+    $offset: Int
+    $exclude: [String]
+  ) {
+    sentence(slug: $slug) {
+      ...SentenceFragment
+      parents {
         ...SentenceFragment
-        parents {
-          ...SentenceFragment
-        }
-        childCount
-        children(order: $order, offset: $offset, exclude: $exclude) {
-          ...SentenceFragment
-        }
+      }
+      childCount
+      children(order: $order, offset: $offset, exclude: $exclude) {
+        ...SentenceFragment
       }
     }
-    ${Sentence.fragments.sentence}
-  `,
-}
+  }
+  ${Sentence.fragments.sentence}
+`
 
 export default StoryTree

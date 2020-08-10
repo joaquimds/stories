@@ -1,8 +1,9 @@
 @import '../../styles/functions';
+@import '../../styles/mixins';
 
 .card {
-  border-radius: spacing(1);
-  box-shadow: 0 0 spacing(1) color(grey-dark);
+  @include card;
+
   padding: spacing(2);
   text-align: center;
 }

@@ -104,13 +104,16 @@ const Page = ({ sentence }) => {
             },
           },
         })
-        if (parent.id === 'root') {
+        if (!parent.id) {
           return router.push('/')
         }
         return router.push('/[slug]', `/${parent.id}`)
       },
     })
   }
+
+  const { slug } = router.query
+  const highlightContent = slug !== sentence.slug
 
   return (
     <>
@@ -140,8 +143,11 @@ const Page = ({ sentence }) => {
             </Link>{' '}
           </span>
         ))}
+        {!highlightContent ? <span>{sentence.content}</span> : null}
       </p>
-      <p className={styles.content}>{sentence.content}</p>
+      {highlightContent ? (
+        <p className={styles.content}>{sentence.content}</p>
+      ) : null}
       {isSaving ? (
         <>
           <label htmlFor="title" className={styles.label}>
@@ -171,7 +177,7 @@ const Page = ({ sentence }) => {
             </button>
           </div>
         </>
-      ) : (
+      ) : isAuthor ? (
         <div className={styles.actions}>
           <button
             type="button"
@@ -181,18 +187,16 @@ const Page = ({ sentence }) => {
           >
             save
           </button>
-          {isAuthor ? (
-            <button
-              type="button"
-              onClick={onClickDelete}
-              disabled={loading}
-              className={`link ${styles.delete}`}
-            >
-              delete
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={onClickDelete}
+            disabled={loading}
+            className={`link ${styles.delete}`}
+          >
+            delete
+          </button>
         </div>
-      )}
+      ) : null}
       {error ? <small className={styles.error}>{error}</small> : null}
     </>
   )

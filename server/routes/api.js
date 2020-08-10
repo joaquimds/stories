@@ -16,7 +16,10 @@ router.put('/api/register', async (req, res) => {
     if (!email || !name || !password) {
       return res.sendStatus(400)
     }
-    const existingUser = await User.query().findOne({ email })
+    const existingUser = await User.query()
+      .where({ email })
+      .orWhere({ name })
+      .first()
     if (existingUser) {
       return res.sendStatus(409)
     }

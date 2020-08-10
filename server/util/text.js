@@ -1,5 +1,5 @@
-export const slugify = (name) => {
-  return encodeURIComponent(name.trim().replace(/\s+/g, '_'))
+export const slugify = (content) => {
+  return encodeURIComponent(content.trim().replace(/\s+/g, '_'))
 }
 
 export const unslugify = (slug) => {

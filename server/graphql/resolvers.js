@@ -1,5 +1,5 @@
+import { raw } from 'objection'
 import { Sentence } from '../models/Sentence'
-import { Title } from '../models/Title'
 import { User } from '../models/User'
 import { logger } from '../services/logger'
 import { slugify } from '../util/text'
@@ -8,16 +8,11 @@ export const resolvers = {
   Query: {
     sentence: async (parent, { slug }) => {
       if (!slug) {
-        return { id: 'root' }
+        return { id: null }
       }
 
-      const title = await Title.query()
-        .findOne({ slug })
-        .withGraphFetched('sentence')
-      if (title && title.sentence) {
-        const { sentence } = title
-        sentence.title = title.content
-        sentence.slug = title.slug
+      const sentence = await Sentence.query().findOne({ slug })
+      if (sentence) {
         return sentence
       }
 
@@ -28,28 +23,39 @@ export const resolvers = {
 
       return null
     },
+    stories: async (parent, { search }) => {
+      const limit = 100
+      if (!search) {
+        return Sentence.query().whereNotNull('title').limit(limit)
+      }
+      return Sentence.query()
+        .with('t', raw('select plainto_tsquery(?) as q', search))
+        .whereRaw('numnode(q) > 0')
+        .andWhereRaw(
+          "to_tsvector('english', title) @@ to_tsquery(q::text || ':*')"
+        )
+        .from(raw('sentences,t'))
+    },
   },
   Sentence: {
     content: ({ id, content, authorId }) => {
-      if (id === 'root') {
+      if (!id) {
         return ''
       }
       return authorId ? content : '[deleted]'
     },
     parents: async (sentence) => {
-      if (sentence.id === 'root') {
+      if (!sentence.id) {
         return []
       }
       const parents = await sentence.getParents()
-      return [{ id: 'root' }, ...parents]
+      return [{ id: null }, ...parents]
     },
     childCount: (sentence) => {
-      const databaseId = sentence.id === 'root' ? null : sentence.id
-      return Sentence.countChildren(databaseId)
+      return Sentence.countChildren(sentence.id)
     },
     children: (sentence, { order, offset, exclude }) => {
-      const databaseId = sentence.id === 'root' ? null : sentence.id
-      return Sentence.getChildren(databaseId, order, offset, exclude)
+      return Sentence.getChildren(sentence.id, order, offset, exclude)
     },
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null
@@ -59,7 +65,7 @@ export const resolvers = {
     addSentenceMutation: async (parent, args, { user }) => {
       try {
         const content = args.content.trim()
-        const parentId = args.parentId === 'root' ? null : args.parentId
+        const parentId = args.parentId
         if (!user || !content) {
           return { errorCode: 400 }
         }
@@ -74,22 +80,28 @@ export const resolvers = {
         return { errorCode: 500 }
       }
     },
-    saveSentenceMutation: async (parent, args) => {
+    saveSentenceMutation: async (parent, args, { user }) => {
       const { id, title } = args
+      if (!user) {
+        return { errorCode: 403 }
+      }
+      const authorId = user.id
       try {
         const sentence = await Sentence.query().findById(id)
         if (!sentence) {
           return { errorCode: 404 }
         }
+        if (sentence.authorId !== authorId) {
+          return { errorCode: 403 }
+        }
         const slug = slugify(title)
-        const existingTitle = await Title.query().findOne({ slug })
-        if (existingTitle) {
+        const existing = await Sentence.query().findOne({ slug })
+        if (existing) {
           return { errorCode: 409 }
         }
-        await Title.query().insertAndFetch({
+        await Sentence.query().patchAndFetchById(id, {
           slug,
-          content: title,
-          sentenceId: sentence.id,
+          title,
         })
         return { slug }
       } catch (e) {
@@ -99,15 +111,19 @@ export const resolvers = {
     },
     deleteSentenceMutation: async (parent, args, { user }) => {
       const { id } = args
+      if (!user) {
+        return { errorCode: 403 }
+      }
+      const authorId = user.id
       try {
-        if (!user) {
-          return { errorCode: 400 }
-        }
         const sentence = await Sentence.query()
           .findById(id)
           .withGraphFetched('children')
         if (!sentence) {
           return { errorCode: 404 }
+        }
+        if (sentence.authorId !== authorId) {
+          return { errorCode: 403 }
         }
         if (sentence.children.length) {
           const updated = await Sentence.query().patchAndFetchById(id, {

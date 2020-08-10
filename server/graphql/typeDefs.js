@@ -11,7 +11,7 @@ export const typeDefs = gql`
     name: String!
   }
   type Sentence {
-    id: String!
+    id: String
     content: String!
     parents: [Sentence]!
     childCount: Int!
@@ -22,6 +22,7 @@ export const typeDefs = gql`
   }
   type Query {
     sentence(slug: String): Sentence
+    stories(search: String): [Sentence]
   }
   type SaveResponse {
     errorCode: Int

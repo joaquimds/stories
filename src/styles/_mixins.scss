@@ -3,3 +3,8 @@
     @content;
   }
 }
+
+@mixin card {
+  border-radius: spacing(1);
+  box-shadow: 0 0 spacing(1) color(grey-dark);
+}

@@ -2,8 +2,8 @@
 @import '../../styles/mixins';
 
 .container {
-  border-radius: spacing(1);
-  box-shadow: 0 0 spacing(1) color(grey-dark);
+  @include card;
+
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -44,10 +44,8 @@
 }
 
 .begin {
-  display: none;
-  @include desktop {
-    display: block;
-  }
+  margin: auto;
+  text-align: center;
 }
 
 .content {

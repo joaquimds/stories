@@ -1,3 +1,5 @@
+import { slugify } from '../util/text'
+
 exports.seed = async (knex) => {
   await knex('sentences').truncate()
   await knex('sentences').insert({
@@ -27,6 +29,8 @@ exports.seed = async (knex) => {
       'It was very hot and the express from Barcelona would come in forty minutes.',
     authorId: 1,
     parentId: 3,
+    title: 'Hills Like White Elephants',
+    slug: slugify('Hills Like White Elephants'),
   })
   for (let i = 0; i < 10; i++) {
     await knex('sentences').insert({

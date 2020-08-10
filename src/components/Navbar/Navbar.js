@@ -28,7 +28,10 @@ const Navbar = () => {
           <span>{process.env.title}</span>
         </a>
       </Link>
-      <div className={styles.auth}>
+      <div className={styles.links}>
+        <Link href="/library">
+          <a>Library</a>
+        </Link>
         {user ? (
           <button type="button" className="link" onClick={onClickLogout}>
             Log Out

@@ -118,12 +118,6 @@ const createApolloClient = (initialState = {}) => {
     typePolicies: {
       Sentence: {
         fields: {
-          title: {
-            merge: mergeCoalesce,
-          },
-          slug: {
-            merge: mergeCoalesce,
-          },
           children: {
             keyArgs: ['order'],
             merge: mergeChildren,
@@ -160,7 +154,5 @@ const mergeChildren = (existing = [], incoming = [], { readField }) => {
   }
   return merged
 }
-
-const mergeCoalesce = (existing, incoming) => incoming || existing || null
 
 export default withData

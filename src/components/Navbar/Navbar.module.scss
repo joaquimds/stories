@@ -17,6 +17,10 @@
   }
 }
 
-.auth {
+.links {
   margin-left: auto;
+
+  :first-child {
+    margin-right: spacing(2);
+  }
 }
