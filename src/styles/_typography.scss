@@ -5,6 +5,10 @@ html {
   font-family: 'EB Garamond', serif;
 }
 
+h1 {
+  margin-bottom: spacing(1);
+}
+
 a {
   color: color(black);
   cursor: pointer;

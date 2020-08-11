@@ -106,7 +106,7 @@ export const resolvers = {
   Mutation: {
     addSentenceMutation: async (parent, args, { user }) => {
       try {
-        const content = args.content.trim()
+        const content = args.content.trim().substring(0, 240)
         const parentId = args.parentId
         if (!user || !content) {
           return { errorCode: 400 }

@@ -67,6 +67,7 @@ const Write = ({ parentId }) => {
         onChange={(e) => setContent(e.target.value)}
         placeholder="Write"
         disabled={!user}
+        maxLength={280}
       />
       {user ? (
         <button className="button" disabled={loading || !content || !user}>
