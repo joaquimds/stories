@@ -1,4 +1,4 @@
-import { useQuery } from '@apollo/react-hooks'
+import { useApolloClient, useQuery } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
 import Link from 'next/link'
 import * as PropTypes from 'prop-types'
@@ -16,13 +16,14 @@ const nprogress = new NProgress()
 const StoryTree = ({ slug }) => {
   const [order, setOrder] = useState('likes')
   const [writtenIds] = useContext(WrittenIdsContext)
+  const client = useApolloClient()
   const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
       slug,
       order,
     },
   })
-  console.log('data', data, loading)
+  console.log('data', client.cache.data.data)
   useEffect(() => {
     if (loading) {
       nprogress.start()
