@@ -26,6 +26,7 @@ export const resolvers = {
       return Sentence.countChildren(id)
     },
     children: (sentence, { order, offset }) => {
+      console.log('get children')
       const id = sentence.id === 'root' ? null : sentence.id
       return Sentence.getChildren(id, order, offset)
     },
