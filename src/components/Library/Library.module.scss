@@ -29,9 +29,12 @@
   @include card;
   flex-grow: 1;
   margin: 0 spacing(1) spacing(2);
-  max-width: calc((600px - #{spacing(2)}) / 2 - 2 * #{spacing(1)});
-  min-width: calc((600px - #{spacing(2)}) / 3 - 2 * #{spacing(1)});
   padding: spacing(2);
+
+  @include desktop {
+    max-width: calc((600px - #{spacing(2)}) / 2 - 2 * #{spacing(1)});
+    min-width: calc((600px - #{spacing(2)}) / 3 - 2 * #{spacing(1)});
+  }
 }
 
 .load-more {
