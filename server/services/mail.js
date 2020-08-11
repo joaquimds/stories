@@ -22,7 +22,7 @@ export const sendPasswordReset = (to, token) =>
     const text = `Go to ${resetUrl} to reset your password`
     const html = `Click here to reset your password: <a href="${resetUrl}">${resetUrl}</a>`
     const mailOptions = {
-      from: `Stories ${user}`,
+      from: `"Story Tree" ${user}`,
       to,
       subject: 'Password reset',
       text,
