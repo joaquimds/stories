@@ -57,6 +57,7 @@ const withData = (PageComponent, { ssr } = {}) => {
         // Only if ssr is enabled
         if (ssr) {
           try {
+            console.log('get data from tree')
             await ctx.req.getDataFromTree(
               <AppTree
                 pageProps={{
@@ -79,6 +80,7 @@ const withData = (PageComponent, { ssr } = {}) => {
       }
 
       // Extract query data from the Apollo store
+      console.log('extract cache')
       const apolloState = apolloClient.cache.extract()
 
       return {

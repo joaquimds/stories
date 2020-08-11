@@ -87,6 +87,7 @@ export const resolvers = {
       return Sentence.countChildren(sentence.id)
     },
     children: (sentence, { order, offset, exclude }) => {
+      console.log('returning children')
       return Sentence.getChildren(sentence.id, order, offset, LIMIT, exclude)
     },
     author: ({ authorId }) => {
