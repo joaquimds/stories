@@ -1,0 +1,25 @@
+@import "../../styles/functions";
+
+.sentence-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.info {
+  margin: 0 auto;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.sentence {
+  margin-bottom: spacing(1);
+}
+
+.load-more {
+  margin: 0 auto;
+}

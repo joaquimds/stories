@@ -1,9 +1,10 @@
+import { Like } from '../models/Like'
 import { Sentence } from '../models/Sentence'
 import { User } from '../models/User'
 import { logger } from '../services/logger'
 import { slugify } from '../util/text'
 
-const LIMIT = 10
+const LIMIT = 3
 
 export const resolvers = {
   Query: {
@@ -24,48 +25,48 @@ export const resolvers = {
 
       return null
     },
-    stories: async (parent, { search }) => {
-      if (!search) {
-        return Sentence.query().whereNotNull('title').limit(LIMIT)
+    stories: async (parent, { search, order, offset = 0 }) => {
+      const query = Sentence.query().whereNotNull('title')
+      if (search) {
+        const escapedSearch = search.replace(/%/g, '\\%')
+        query.andWhere('title', 'ilike', `%${escapedSearch}%`)
       }
-      const escapedSearch = search.replace(/%/g, '\\%')
-      return Sentence.query().where('title', 'ilike', `%${escapedSearch}%`)
+      const countResult = await query.clone().count().first()
+      Sentence.addOrder(query, order)
+      const sentences = await query.offset(offset).limit(LIMIT)
+      return { count: countResult.count, sentences }
     },
-    mySentences: async (
-      parent,
-      { search, offset = 0, exclude = [] },
-      { user }
-    ) => {
+    mySentences: async (parent, { search, offset = 0 }, { user }) => {
       if (!user) {
         return []
       }
-      if (!search) {
-        const countQuery = await Sentence.query()
-          .whereNotIn('id', exclude)
-          .andWhere({ authorId: user.id })
-          .count()
-          .first()
-        const sentences = await User.relatedQuery('sentences')
-          .for(user.id)
-          .whereNotIn('id', exclude)
-          .offset(offset)
-          .limit(LIMIT)
-        return { count: countQuery.count, sentences }
+      const query = Sentence.query().where({ authorId: user.id })
+      if (search) {
+        const escapedSearch = search.replace(/%/g, '\\%')
+        query.andWhere('content', 'ilike', `%${escapedSearch}%`)
       }
-      const escapedSearch = search.replace(/%/g, '\\%')
-      const countQuery = await Sentence.query()
-        .whereNotIn('id', exclude)
-        .andWhere({ authorId: user.id })
-        .andWhere('content', 'ilike', `%${escapedSearch}%`)
-        .count()
-        .first()
-      const sentences = await Sentence.query()
-        .whereNotIn('id', exclude)
-        .andWhere({ authorId: user.id })
-        .andWhere('content', 'ilike', `%${escapedSearch}%`)
-        .offset(offset)
-        .limit(LIMIT)
-      return { count: countQuery.count, sentences }
+      const countResult = await query.clone().count().first()
+      const sentences = await query.offset(offset).limit(LIMIT)
+      return { count: countResult.count, sentences }
+    },
+    likedSentences: async (parent, { search, offset = 0 }, { user }) => {
+      if (!user) {
+        return []
+      }
+      const subquery = Like.query().where({ userId: user.id })
+      const query = Like.relatedQuery('sentence')
+        .for(subquery)
+        .whereNotNull('content')
+      if (search) {
+        const escapedSearch = search.replace(/%/g, '\\%')
+        query.andWhere('content', 'ilike', `%${escapedSearch}%`)
+      }
+      const countResult = await query.clone().count().first()
+      const sentences = await query.offset(offset).limit(LIMIT)
+      return {
+        count: countResult.count,
+        sentences,
+      }
     },
   },
   Sentence: {
@@ -86,10 +87,20 @@ export const resolvers = {
       return Sentence.countChildren(sentence.id)
     },
     children: (sentence, { order, offset, exclude }) => {
-      return Sentence.getChildren(sentence.id, order, offset, exclude)
+      return Sentence.getChildren(sentence.id, order, offset, LIMIT, exclude)
     },
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null
+    },
+    liked: async ({ id }, args, { user }) => {
+      if (!user || !id) {
+        return false
+      }
+      const like = await Like.query().findOne({
+        sentenceId: id,
+        userId: user.id,
+      })
+      return Boolean(like)
     },
   },
   Mutation: {
@@ -166,6 +177,32 @@ export const resolvers = {
         return {}
       } catch (e) {
         logger.error('%s %o %o', 'deleteSentenceMutation', args, e.message)
+        return { errorCode: 500 }
+      }
+    },
+    likeSentenceMutation: async (parent, args, { user }) => {
+      const { id, like } = args
+      if (!user) {
+        return { errorCode: 403 }
+      }
+      try {
+        const sentence = await Sentence.query().findById(id)
+        if (!sentence) {
+          return { errorCode: 404 }
+        }
+        const queryArgs = { sentenceId: id, userId: user.id }
+        if (like) {
+          const existing = await Like.query().findOne(queryArgs)
+          if (existing) {
+            return {}
+          }
+          await Like.query().insert(queryArgs)
+          return {}
+        }
+        await Like.query().delete().where(queryArgs)
+        return {}
+      } catch (e) {
+        logger.error('%s %o %o', 'likeSentenceMutation', args, e.message)
         return { errorCode: 500 }
       }
     },

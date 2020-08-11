@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
-import Link from 'next/dist/client/link'
+import Link from 'next/link'
 import * as PropTypes from 'prop-types'
 import { useContext, useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
@@ -14,7 +14,7 @@ import styles from './StoryTree.module.scss'
 const nprogress = new NProgress()
 
 const StoryTree = ({ slug }) => {
-  const [order, setOrder] = useState('longest')
+  const [order, setOrder] = useState('likes')
   const [writtenIds] = useContext(WrittenIdsContext)
   const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
@@ -86,11 +86,11 @@ const StoryTree = ({ slug }) => {
                   {ORDERS.map((o) => (
                     <button
                       type="button"
-                      key={o}
-                      className={buttonClass(o, order)}
-                      onClick={() => setOrder(o.toLowerCase())}
+                      key={o.value}
+                      className={buttonClass(o.value, order)}
+                      onClick={() => setOrder(o.value)}
                     >
-                      {o}
+                      {o.label}
                     </button>
                   ))}
                 </div>
@@ -132,7 +132,7 @@ const extractSentences = (data) => {
 }
 
 const buttonClass = (order, current) => {
-  return `link ${order.toLowerCase() === current ? 'active' : ''}`
+  return `link ${order === current ? 'active' : ''}`
 }
 
 StoryTree.propTypes = {

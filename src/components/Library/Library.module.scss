@@ -7,6 +7,16 @@
   min-height: 0;
 }
 
+.sort {
+  display: flex;
+  justify-content: space-evenly;
+  margin: 0 -#{spacing(0)} spacing(1);
+
+  > * {
+    padding: 0 spacing(0);
+  }
+}
+
 .list {
   display: flex;
   flex-wrap: wrap;
@@ -22,6 +32,14 @@
   max-width: calc((600px - #{spacing(2)}) / 2 - 2 * #{spacing(1)});
   min-width: calc((600px - #{spacing(2)}) / 3 - 2 * #{spacing(1)});
   padding: spacing(2);
+}
+
+.load-more {
+  display: flex;
+  width: 100%;
+  button {
+    margin: auto;
+  }
 }
 
 .info {

@@ -13,6 +13,7 @@
 .form {
   display: flex;
   flex-direction: column;
+  margin-top: spacing(1);
 }
 
 .actions {
@@ -24,9 +25,11 @@
   margin-left: spacing(1);
 }
 
-.label {
+.save {
+  color: color(blue);
+  margin-left: spacing(1);
 }
 
-.save {
+.like {
   color: color(green);
 }

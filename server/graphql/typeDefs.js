@@ -5,6 +5,7 @@ export const typeDefs = gql`
     oldest
     newest
     longest
+    likes
   }
   type User {
     id: String!
@@ -19,6 +20,7 @@ export const typeDefs = gql`
     author: User
     title: String
     slug: String
+    liked: Boolean!
   }
   type SentenceList {
     count: Int!
@@ -26,8 +28,12 @@ export const typeDefs = gql`
   }
   type Query {
     sentence(slug: String): Sentence
-    stories(search: String): [Sentence]!
-    mySentences(search: String, offset: Int, exclude: [String]): SentenceList!
+    stories(search: String, order: Order, offset: Int): SentenceList!
+    mySentences(search: String, offset: Int): SentenceList!
+    likedSentences(search: String, offset: Int): SentenceList!
+  }
+  type Response {
+    errorCode: Int
   }
   type SaveResponse {
     errorCode: Int
@@ -41,5 +47,6 @@ export const typeDefs = gql`
     addSentenceMutation(content: String!, parentId: String): SentenceResponse
     saveSentenceMutation(id: String!, title: String!): SaveResponse
     deleteSentenceMutation(id: String!): SentenceResponse
+    likeSentenceMutation(id: String!, like: Boolean!): Response
   }
 `

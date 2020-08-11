@@ -131,6 +131,19 @@ const createApolloClient = (initialState = {}) => {
               }
             },
           },
+          stories: {
+            keyArgs: ['search', 'order'],
+            merge: (existing = {}, incoming = {}, options) => {
+              return {
+                ...incoming,
+                sentences: mergeChildren(
+                  existing.sentences,
+                  incoming.sentences,
+                  options
+                ),
+              }
+            },
+          },
         },
       },
       Sentence: {

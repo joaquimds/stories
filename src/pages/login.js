@@ -1,26 +1,20 @@
 import Router from 'next/router'
 import NProgress from 'nprogress'
-import * as PropTypes from 'prop-types'
-import { useEffect } from 'react'
+import { useContext, useEffect } from 'react'
 import Login from '../components/Login/Login'
+import UserContext from '../context/UserContext'
 
-const LoginPage = ({ isAuthenticated }) => {
+const LoginPage = () => {
+  const user = useContext(UserContext)
+
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user) {
       NProgress.start()
       Router.replace('/')
     }
-  }, [isAuthenticated])
+  }, [user])
 
-  return isAuthenticated ? null : <Login />
-}
-
-LoginPage.propTypes = {
-  isAuthenticated: PropTypes.bool,
-}
-
-export const getServerSideProps = async ({ req }) => {
-  return { props: { isAuthenticated: Boolean(req.user) } }
+  return user ? null : <Login />
 }
 
 export default LoginPage

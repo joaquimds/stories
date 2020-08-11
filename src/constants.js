@@ -1,4 +1,9 @@
-export const ORDERS = ['Longest', 'Newest', 'Oldest']
+export const ORDERS = [
+  { label: 'Popular', value: 'likes' },
+  { label: 'Longest', value: 'longest' },
+  { label: 'Newest', value: 'newest' },
+  { label: 'Oldest', value: 'oldest' },
+]
 export const ERRORS = {
   400: 'Invalid request',
   401: 'Bad credentials',

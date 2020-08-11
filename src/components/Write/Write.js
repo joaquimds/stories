@@ -103,14 +103,8 @@ const updateCache = (cache, parentId, newSentence) => {
   cache.modify({
     id: 'ROOT_QUERY',
     fields: {
-      mySentences(mySentences) {
-        if (!mySentences) {
-          return null
-        }
-        return {
-          count: mySentences.count + 1,
-          sentences: [...mySentences.sentences, newSentenceRef],
-        }
+      mySentences({ DELETE }) {
+        return DELETE
       },
     },
   })

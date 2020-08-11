@@ -1,9 +1,9 @@
 import Router from 'next/router'
 import { useContext, useEffect } from 'react'
-import Account from '../components/Account/Account'
-import withData from '../containers/withData'
-import UserContext from '../context/UserContext'
-import NProgress from '../services/nprogress'
+import Account from '../../components/Account/Account'
+import withData from '../../containers/withData'
+import UserContext from '../../context/UserContext'
+import NProgress from '../../services/nprogress'
 
 const AccountPage = () => {
   const user = useContext(UserContext)

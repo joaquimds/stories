@@ -9,6 +9,14 @@ import UserContext from '../../context/UserContext'
 import Sentence from '../Sentence/Sentence'
 import styles from './Page.module.scss'
 
+const LIKE_SENTENCE_MUTATION = gql`
+  mutation LikeSentenceMutation($id: String!, $like: Boolean!) {
+    likeSentenceMutation(id: $id, like: $like) {
+      errorCode
+    }
+  }
+`
+
 const SAVE_SENTENCE_MUTATION = gql`
   mutation SaveSentenceMutation($id: String!, $title: String!) {
     saveSentenceMutation(id: $id, title: $title) {
@@ -46,6 +54,10 @@ const Page = ({ sentence }) => {
     SAVE_SENTENCE_MUTATION
   )
 
+  const [likeSentence, { loading: likeLoading }] = useMutation(
+    LIKE_SENTENCE_MUTATION
+  )
+
   const isAuthor = user && sentence.author && sentence.author.id === user.id
   const setErrorFromCode = (errorCode) => {
     setError(ERRORS[errorCode] || `Unknown error ${errorCode}`)
@@ -56,7 +68,7 @@ const Page = ({ sentence }) => {
     await saveSentence({
       variables: { id: sentence.id, title },
       update(
-        _,
+        cache,
         {
           data: {
             saveSentenceMutation: { errorCode, slug },
@@ -66,6 +78,14 @@ const Page = ({ sentence }) => {
         if (errorCode) {
           return setErrorFromCode(errorCode)
         }
+        cache.modify({
+          id: 'ROOT_QUERY',
+          fields: {
+            stories({ DELETE }) {
+              return DELETE
+            },
+          },
+        })
         return router.push('/[slug]', `/${slug}`)
       },
     })
@@ -108,16 +128,11 @@ const Page = ({ sentence }) => {
         cache.modify({
           id: 'ROOT_QUERY',
           fields: {
-            mySentences(mySentences, { readField }) {
-              if (!mySentences) {
-                return null
-              }
-              return {
-                count: mySentences.count > 0 ? mySentences.count - 1 : 0,
-                sentences: mySentences.sentences.filter(
-                  (sentenceRef) => readField('id', sentenceRef) !== sentence.id
-                ),
-              }
+            mySentences(sentenceList, options) {
+              return removeSentence(sentence.id, sentenceList, options)
+            },
+            likedSentences(sentenceList, options) {
+              return removeSentence(sentence.id, sentenceList, options)
             },
           },
         })
@@ -125,6 +140,43 @@ const Page = ({ sentence }) => {
           return router.push('/')
         }
         return router.push('/[slug]', `/${parent.id}`)
+      },
+    })
+  }
+
+  const onClickLike = async () => {
+    await likeSentence({
+      variables: {
+        id: sentence.id,
+        like: !sentence.liked,
+      },
+      update(
+        cache,
+        {
+          data: {
+            likeSentenceMutation: { errorCode },
+          },
+        }
+      ) {
+        if (errorCode) {
+          return setErrorFromCode(errorCode)
+        }
+        cache.modify({
+          id: `Sentence:${sentence.id}`,
+          fields: {
+            liked() {
+              return !sentence.liked
+            },
+          },
+        })
+        cache.modify({
+          id: 'ROOT_QUERY',
+          fields: {
+            likedSentences(sentenceList, { DELETE }) {
+              return DELETE
+            },
+          },
+        })
       },
     })
   }
@@ -185,24 +237,36 @@ const Page = ({ sentence }) => {
             </button>
           </div>
         </form>
-      ) : isAuthor ? (
+      ) : user ? (
         <div className={styles.actions}>
           <button
             type="button"
-            onClick={() => setSaving(true)}
-            disabled={saveLoading}
-            className={`link ${styles.save}`}
+            onClick={onClickLike}
+            disabled={likeLoading}
+            className={`link ${styles.like}`}
           >
-            save
+            {sentence.liked ? 'unfavourite' : 'favourite'}
           </button>
-          <button
-            type="button"
-            onClick={onClickDelete}
-            disabled={loading}
-            className={`link ${styles.delete}`}
-          >
-            delete
-          </button>
+          {isAuthor ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setSaving(true)}
+                disabled={saveLoading}
+                className={`link ${styles.save}`}
+              >
+                title
+              </button>
+              <button
+                type="button"
+                onClick={onClickDelete}
+                disabled={loading}
+                className={`link ${styles.delete}`}
+              >
+                delete
+              </button>
+            </>
+          ) : null}
         </div>
       ) : null}
       {error ? <small className="error">{error}</small> : null}
@@ -236,6 +300,18 @@ const renderAuthors = (sentence) => {
       By {authorNames.join(', ')} and {last}
     </p>
   )
+}
+
+const removeSentence = (id, sentenceList, { readField }) => {
+  if (!sentenceList) {
+    return null
+  }
+  return {
+    count: sentenceList.count > 0 ? sentenceList.count - 1 : 0,
+    sentences: sentenceList.sentences.filter(
+      (sentenceRef) => readField('id', sentenceRef) !== id
+    ),
+  }
 }
 
 Page.propTypes = {

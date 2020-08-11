@@ -1,4 +1,5 @@
 import { Model, raw, ref } from 'objection'
+import { Like } from './Like'
 
 export class Sentence extends Model {
   static get tableName() {
@@ -37,7 +38,7 @@ export class Sentence extends Model {
             qb2
               .select('sentences.*', raw('depth + 1'))
               .from('sentences')
-              .join('parents', 'sentences.id', 'parents.parent_id')
+              .join('parents', 'sentences.id', 'parents.parentId')
           })
       })
       .orderBy('depth', 'desc')
@@ -52,45 +53,62 @@ export class Sentence extends Model {
     parentId,
     order = 'longest',
     offset = 0,
+    limit = 3,
     exclude = []
   ) {
-    const limit = 3
-    if (order !== 'longest') {
-      const direction = order === 'newest' ? 'desc' : 'asc'
-      return Sentence.query()
-        .whereNotIn('id', exclude)
-        .andWhere({ parentId })
-        .orderBy('id', direction)
-        .offset(offset)
-        .limit(limit)
-    }
-    const subquery = Sentence.query()
-      .max('depth')
-      .as('length')
-      .from('sentenceDepths')
-      .withRecursive('sentenceDepths', (qb1) => {
-        qb1
-          .select('id', raw('1 as depth'))
-          .from('sentences as s1')
-          .where({ id: ref('sentences.id') })
-          .union((qb2) => {
-            qb2
-              .select('sentences.id', raw('depth + 1'))
-              .from('sentences')
-              .join(
-                'sentenceDepths',
-                'sentences.parent_id',
-                'sentenceDepths.id'
-              )
-          })
-      })
-    return Sentence.query()
-      .select(['sentences.*', subquery])
+    const query = Sentence.query()
       .whereNotIn('id', exclude)
       .andWhere({ parentId })
-      .orderBy('length', 'desc')
-      .orderBy('id', 'asc')
-      .offset(offset)
-      .limit(limit)
+    Sentence.addOrder(query, order)
+    return query.offset(offset).limit(limit)
+  }
+
+  static addOrder(query, order = 'oldest') {
+    const select = ['sentences.*']
+    let subquery
+    switch (order) {
+      case 'newest':
+        query.orderBy('id', 'desc')
+        break
+      case 'likes':
+        subquery = Like.query()
+          .where({ sentenceId: ref('sentences.id') })
+          .count()
+          .as('likes')
+        query.orderBy('likes', 'desc')
+        query.orderBy('id', 'asc')
+        select.push(subquery)
+        break
+      case 'longest':
+        subquery = Sentence.query()
+          .max('depth')
+          .as('length')
+          .from('sentenceDepths')
+          .withRecursive('sentenceDepths', (qb1) => {
+            qb1
+              .select('id', raw('1 as depth'))
+              .from('sentences as s1')
+              .where({ id: ref('sentences.id') })
+              .union((qb2) => {
+                qb2
+                  .select('sentences.id', raw('depth + 1'))
+                  .from('sentences')
+                  .join(
+                    'sentenceDepths',
+                    'sentences.parentId',
+                    'sentenceDepths.id'
+                  )
+              })
+          })
+        query.orderBy('length', 'desc')
+        query.orderBy('id', 'asc')
+        select.push(subquery)
+        break
+      case 'oldest':
+      default:
+        query.orderBy('id', 'asc')
+        break
+    }
+    return query.select(select)
   }
 }

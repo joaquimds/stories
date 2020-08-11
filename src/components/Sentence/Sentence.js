@@ -7,7 +7,7 @@ const Sentence = ({ sentence }) => {
   return (
     <div className={styles.card}>
       <p>
-        <Link href="/[slug]" as={sentence.slug || sentence.id}>
+        <Link href="/[slug]" as={`/${sentence.slug || sentence.id}`}>
           <a className={styles.link}>{sentence.content}</a>
         </Link>
       </p>
@@ -43,6 +43,7 @@ Sentence.fragments = {
         id
         name
       }
+      liked
     }
   `,
 }

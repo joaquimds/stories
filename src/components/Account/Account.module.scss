@@ -1,33 +1,21 @@
 @import "../../styles/functions";
 
 .account {
+  align-items: flex-start;
   display: flex;
   flex-direction: column;
   min-height: 0;
-}
 
-.heading {
   h1 {
-    margin-right: auto;
+    margin-bottom: spacing(1);
   }
-  align-items: center;
-  display: flex;
-}
 
-.info {
-  margin: 0 auto;
-}
+  ul {
+    list-style: initial;
+    padding-left: 1rem;
+  }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-}
-
-.sentence {
-  margin-bottom: spacing(1);
-}
-
-.load-more {
-  margin: 0 auto;
+  li {
+    margin-bottom: spacing(1);
+  }
 }
