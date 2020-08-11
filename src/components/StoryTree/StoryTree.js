@@ -21,6 +21,7 @@ const StoryTree = ({ id }) => {
       order,
     },
   })
+  console.log('data', data, loading)
   useEffect(() => {
     if (loading) {
       nprogress.start()
