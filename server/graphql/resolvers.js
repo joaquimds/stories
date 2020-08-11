@@ -36,7 +36,7 @@ export const resolvers = {
       const sentences = await query.offset(offset).limit(LIMIT)
       return { count: countResult.count, sentences }
     },
-    mySentences: async (parent, { search, offset = 0 }, { user }) => {
+    mySentences: async (parent, { search, offset = 0 }, { user } = {}) => {
       if (!user) {
         return []
       }
@@ -49,7 +49,7 @@ export const resolvers = {
       const sentences = await query.offset(offset).limit(LIMIT)
       return { count: countResult.count, sentences }
     },
-    likedSentences: async (parent, { search, offset = 0 }, { user }) => {
+    likedSentences: async (parent, { search, offset = 0 }, { user } = {}) => {
       if (!user) {
         return []
       }
@@ -92,7 +92,7 @@ export const resolvers = {
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null
     },
-    liked: async ({ id }, args, { user }) => {
+    liked: async ({ id }, args, { user } = {}) => {
       if (!user || !id) {
         return false
       }
@@ -104,7 +104,7 @@ export const resolvers = {
     },
   },
   Mutation: {
-    addSentenceMutation: async (parent, args, { user }) => {
+    addSentenceMutation: async (parent, args, { user } = {}) => {
       try {
         const content = args.content.trim().substring(0, 240)
         const parentId = args.parentId
@@ -122,7 +122,7 @@ export const resolvers = {
         return { errorCode: 500 }
       }
     },
-    saveSentenceMutation: async (parent, args, { user }) => {
+    saveSentenceMutation: async (parent, args, { user } = {}) => {
       const { id, title } = args
       if (!user) {
         return { errorCode: 403 }
@@ -151,7 +151,7 @@ export const resolvers = {
         return { errorCode: 500 }
       }
     },
-    deleteSentenceMutation: async (parent, args, { user }) => {
+    deleteSentenceMutation: async (parent, args, { user } = {}) => {
       const { id } = args
       if (!user) {
         return { errorCode: 403 }
@@ -180,7 +180,7 @@ export const resolvers = {
         return { errorCode: 500 }
       }
     },
-    likeSentenceMutation: async (parent, args, { user }) => {
+    likeSentenceMutation: async (parent, args, { user } = {}) => {
       const { id, like } = args
       if (!user) {
         return { errorCode: 403 }
