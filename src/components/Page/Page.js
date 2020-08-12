@@ -184,26 +184,27 @@ const Page = ({ sentence }) => {
   const firstSentence = sentence.parents.filter(({ content, author }) => {
     return content && author
   })[0]
+  const metaTitle = sentence.title
+    ? `${sentence.title} | ${process.env.title}`
+    : process.env.title
   const description = firstSentence ? firstSentence.content : sentence.content
 
   return (
     <>
       <Head>
-        {sentence.title ? (
-          <title>
-            {sentence.title} | {process.env.title}
-          </title>
-        ) : null}
+        <title>{metaTitle}</title>
         <meta
           key="og:url"
           property="og:url"
           content={`${process.env.siteUrl}/${sentence.slug || sentence.id}`}
         />
+        <meta key="og:title" property="og:title" content={metaTitle} />
         <meta
           key="og:description"
           property="og:description"
           content={description}
         />
+        <meta key="twitter:title" name="twitter:title" content={metaTitle} />
         <meta
           key="twitter:description"
           name="twitter:description"
