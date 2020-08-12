@@ -2,6 +2,7 @@ require('dotenv').config()
 
 module.exports = {
   constants: {
+    adminEmail: process.env.ADMIN_EMAIL,
     initialAdminPassword: process.env.INITIAL_ADMIN_PASSWORD,
   },
   db: {

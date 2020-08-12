@@ -43,6 +43,8 @@ const Page = ({ sentence }) => {
   const user = useContext(UserContext)
 
   const [isSaving, setSaving] = useState(false)
+  const [reportLoading, setReportLoading] = useState(false)
+  const [isReported, setReported] = useState(false)
   const [error, setError] = useState(null)
   const [title, setTitle] = useState('')
 
@@ -181,6 +183,23 @@ const Page = ({ sentence }) => {
     })
   }
 
+  const onClickReport = async () => {
+    setReportLoading(true)
+    try {
+      const response = await fetch(`/api/report/${sentence.id}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+      if (response.ok) {
+        return setReported(true)
+      }
+      setReportLoading(false)
+      setError(ERRORS[response.status])
+    } catch (e) {
+      setError('Unknown error')
+    }
+  }
+
   const firstSentence = sentence.parents.filter(({ content, author }) => {
     return content && author
   })[0]
@@ -221,7 +240,9 @@ const Page = ({ sentence }) => {
       ))}
       <p className={styles.content}>{sentence.content}</p>
       {renderAuthors(sentence)}
-      {isSaving ? (
+      {isReported ? (
+        <p className={styles.reported}>reported</p>
+      ) : isSaving ? (
         <form onSubmit={onSubmitSave} className={styles.form}>
           <label htmlFor="title" className={styles.label}>
             Title
@@ -248,16 +269,20 @@ const Page = ({ sentence }) => {
             </button>
           </div>
         </form>
-      ) : user ? (
+      ) : (
         <div className={styles.actions}>
-          <button
-            type="button"
-            onClick={onClickLike}
-            disabled={likeLoading}
-            className={`link ${styles.like}`}
-          >
-            {sentence.liked ? 'unfavourite' : 'favourite'}
-          </button>
+          {user ? (
+            <>
+              <button
+                type="button"
+                onClick={onClickLike}
+                disabled={likeLoading}
+                className={`link ${styles.like}`}
+              >
+                {sentence.liked ? 'unfavourite' : 'favourite'}
+              </button>
+            </>
+          ) : null}
           {isAuthor ? (
             <>
               <button
@@ -277,9 +302,18 @@ const Page = ({ sentence }) => {
                 delete
               </button>
             </>
+          ) : sentence.author ? (
+            <button
+              type="button"
+              onClick={onClickReport}
+              disabled={reportLoading}
+              className={`link ${styles.delete}`}
+            >
+              report
+            </button>
           ) : null}
         </div>
-      ) : null}
+      )}
       {error ? <small className="error">{error}</small> : null}
     </>
   )

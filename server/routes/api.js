@@ -1,9 +1,10 @@
 import { randomBytes } from 'crypto'
 import express from 'express'
+import { Sentence } from '../models/Sentence'
 import { User } from '../models/User'
 import { hash } from '../services/bcrypt'
 import { logger } from '../services/logger'
-import { sendPasswordReset } from '../services/mail'
+import { sendPasswordReset, sendReport } from '../services/mail'
 import { passport } from '../services/passport'
 
 const router = express.Router()
@@ -83,6 +84,21 @@ router.post('/api/reset-password', async (req, res) => {
     if (!count) {
       return res.sendStatus(404)
     }
+    res.sendStatus(200)
+  } catch (e) {
+    logger.error(e.message)
+    res.sendStatus(500)
+  }
+})
+
+router.post('/api/report/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const sentence = await Sentence.query().findById(id)
+    if (!sentence) {
+      return res.sendStatus(404)
+    }
+    await sendReport(sentence)
     res.sendStatus(200)
   } catch (e) {
     logger.error(e.message)

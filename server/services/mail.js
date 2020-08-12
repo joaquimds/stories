@@ -3,6 +3,7 @@ const {
   email: { host, user, pass },
   site,
 } = require('../../config')
+const config = require('../../config')
 const { logger } = require('./logger')
 
 const transporter = nodemailer.createTransport({
@@ -25,6 +26,27 @@ export const sendPasswordReset = (to, token) =>
       from: `"Story Tree" ${user}`,
       to,
       subject: 'Password reset',
+      text,
+      html,
+    }
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        return reject(err)
+      }
+      logger.info(`Sent reset password email to ${info.envelope.to[0]}`)
+      resolve()
+    })
+  })
+
+export const sendReport = (sentence) =>
+  new Promise((resolve, reject) => {
+    const sentenceUrl = `${site.url}/${sentence.id}`
+    const text = sentenceUrl
+    const html = `<a href="${sentenceUrl}">${sentenceUrl}</a>`
+    const mailOptions = {
+      from: `"Story Tree" ${user}`,
+      to: config.constants.adminEmail,
+      subject: `Sentence Reported: ${sentence.id}`,
       text,
       html,
     }
