@@ -37,7 +37,8 @@ const withData = (PageComponent, { ssr } = {}) => {
 
       // Initialize ApolloClient, add it to the ctx object so
       // we can use it in `PageComponent.getInitialProp`.
-      const apolloClient = initApolloClient(null)
+      const context = { user: ctx.req ? ctx.req.user : null }
+      const apolloClient = initApolloClient(null, context)
       ctx.apolloClient = apolloClient
 
       // Run wrapped getInitialProps methods
@@ -94,11 +95,10 @@ const withData = (PageComponent, { ssr } = {}) => {
 /**
  * Always creates a new apollo client on the server
  * Creates or reuses apollo client in the browser.
- * @param  {Object} initialState
  */
-const initApolloClient = (initialState = {}) => {
+const initApolloClient = (initialState = {}, context = {}) => {
   if (typeof window === 'undefined') {
-    return createApolloClient(initialState)
+    return createApolloClient(initialState, context)
   }
 
   // Reuse client on the client-side
@@ -113,7 +113,7 @@ const initApolloClient = (initialState = {}) => {
  * Creates and configures the ApolloClient
  * @param  {Object} [initialState={}]
  */
-const createApolloClient = (initialState = {}) => {
+const createApolloClient = (initialState = {}, context = {}) => {
   const cache = new InMemoryCache({
     typePolicies: {
       Query: {
@@ -161,7 +161,7 @@ const createApolloClient = (initialState = {}) => {
     return new ApolloClient({
       ssrMode: true,
       cache: cache.restore(initialState),
-      link: new SchemaLink({ schema }),
+      link: new SchemaLink({ schema, context }),
     })
   }
 
