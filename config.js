@@ -28,6 +28,7 @@ module.exports = {
     secure: process.env.SESSION_SECURE !== 'false',
   },
   site: {
+    googleAnalyticsId: process.env.GOOGLE_ANALYTICS_ID,
     url: process.env.SITE_URL || 'https://treeoftales.net',
   },
 }
