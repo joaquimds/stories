@@ -28,6 +28,6 @@ module.exports = {
     secure: process.env.SESSION_SECURE !== 'false',
   },
   site: {
-    url: process.env.SITE_URL || 'https://stories.joaquimdsouza.com',
+    url: process.env.SITE_URL || 'https://treeoftales.net',
   },
 }
