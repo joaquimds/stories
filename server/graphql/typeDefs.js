@@ -14,6 +14,7 @@ export const typeDefs = gql`
   type Sentence {
     id: String
     content: String!
+    intro: String!
     parents: [Sentence]!
     childCount: Int!
     children(order: Order, offset: Int, exclude: [String]): [Sentence]!

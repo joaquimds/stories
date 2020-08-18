@@ -29,7 +29,6 @@ Sentence.propTypes = {
     content: PropTypes.string,
     slug: PropTypes.string,
     children: PropTypes.arrayOf(PropTypes.shape(SentenceType)),
-    parent: PropTypes.shape(SentenceType),
   }),
 }
 Sentence.fragments = {

@@ -5,8 +5,8 @@ const program = require('commander')
 const { runCommand, knex, client } = require('../server')
 
 program
-  .command('create:user <username> <password>')
-  .action((username, password) => run('createUser', username, password))
+  .command('create:fixtures')
+  .action((username, password) => run('createFixtures', username, password))
 
 async function run(name, ...args) {
   await runCommand(name, ...args)

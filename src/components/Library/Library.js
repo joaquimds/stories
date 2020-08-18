@@ -77,16 +77,12 @@ const Library = () => {
 }
 
 const renderSentence = (sentence) => {
-  const firstSentence = sentence.parents.filter(({ content, author }) => {
-    return content && author
-  })[0]
-  const content = firstSentence ? firstSentence.content : sentence.content
   return (
     <li key={sentence.id} className={styles.story}>
       {sentence.title ? <h2>{sentence.title}</h2> : null}
       <p>
         <Link href="/[slug]" as={`/${sentence.slug || sentence.id}`}>
-          <a>{content}</a>
+          <a>{sentence.intro}</a>
         </Link>
       </p>
     </li>
@@ -103,9 +99,7 @@ Library.query = gql`
       count
       sentences {
         ...SentenceFragment
-        parents {
-          ...SentenceFragment
-        }
+        intro
       }
     }
   }

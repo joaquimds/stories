@@ -1,8 +1,8 @@
 import { logger } from '../services/logger'
-import { createUser } from './createUser'
+import { createFixtures } from './createFixtures'
 
 const commands = {
-  createUser,
+  createFixtures,
 }
 
 export const runCommand = async (name, ...args) => {

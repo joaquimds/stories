@@ -31,9 +31,12 @@ export const resolvers = {
         const escapedSearch = search.replace(/%/g, '\\%')
         query.andWhere('title', 'ilike', `%${escapedSearch}%`)
       }
+      if (order === 'longest') {
+        order = 'deepest'
+      }
       const countResult = await query.clone().count().first()
       Sentence.addOrder(query, order)
-      const sentences = await query.offset(offset).limit(LIMIT)
+      const sentences = await query.offset(offset).limit(LIMIT).debug()
       return { count: countResult.count, sentences }
     },
     mySentences: async (parent, { search, offset = 0 }, { user }) => {
@@ -75,6 +78,16 @@ export const resolvers = {
         return ''
       }
       return authorId ? content : '[deleted]'
+    },
+    intro: async (sentence) => {
+      if (!sentence.id) {
+        return ''
+      }
+      const parents = await sentence.getParents()
+      const firstParent = parents.filter(({ content, authorId }) => {
+        return content && authorId
+      })[0]
+      return firstParent ? firstParent.content : sentence.content
     },
     parents: async (sentence) => {
       if (!sentence.id) {

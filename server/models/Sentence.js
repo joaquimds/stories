@@ -104,6 +104,31 @@ export class Sentence extends Model {
         query.orderBy('id', 'asc')
         select.push(subquery)
         break
+      case 'deepest':
+        subquery = Sentence.query()
+          .max('depth')
+          .as('length')
+          .from('sentenceDepths')
+          .withRecursive('sentenceDepths', (qb1) => {
+            qb1
+              .select('parentId', raw('1 as depth'))
+              .from('sentences as s1')
+              .where({ id: ref('sentences.id') })
+              .union((qb2) => {
+                qb2
+                  .select('sentences.parentId', raw('depth + 1'))
+                  .from('sentences')
+                  .join(
+                    'sentenceDepths',
+                    'sentences.id',
+                    'sentenceDepths.parentId'
+                  )
+              })
+          })
+        query.orderBy('length', 'desc')
+        query.orderBy('id', 'asc')
+        select.push(subquery)
+        break
       case 'oldest':
       default:
         query.orderBy('id', 'asc')
