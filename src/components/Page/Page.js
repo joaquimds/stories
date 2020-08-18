@@ -320,15 +320,19 @@ const Page = ({ sentence }) => {
 }
 
 const renderAuthors = (sentence) => {
-  const authors = [sentence, ...sentence.parents]
+  const authors = [...sentence.parents, sentence]
     .map((s) => s.author)
     .filter(Boolean)
   const authorCounts = {}
-  for (const a of authors) {
-    if (!authorCounts[a.name]) {
-      authorCounts[a.name] = 0
+  const authorIndices = {}
+  for (let i = 0; i < authors.length; i++) {
+    const author = authors[i]
+    const key = author.name
+    if (!authorCounts[key]) {
+      authorCounts[key] = 0
+      authorIndices[key] = i
     }
-    authorCounts[a.name]++
+    authorCounts[key]++
   }
   const authorNames = Object.keys(authorCounts)
   if (authorNames.length === 0) {
@@ -338,7 +342,15 @@ const renderAuthors = (sentence) => {
     return <p>By {authorNames[0]}</p>
   }
 
-  authorNames.sort((a, b) => (authorCounts[a] > authorCounts[b] ? -1 : 1))
+  authorNames.sort((a, b) => {
+    if (authorCounts[a] > authorCounts[b]) {
+      return -1
+    }
+    if (authorCounts[a] > authorCounts[b]) {
+      return 1
+    }
+    return authorIndices[a] < authorIndices[b] ? -1 : 1
+  })
   const last = authorNames.pop()
   return (
     <p>
