@@ -36,7 +36,7 @@ export const resolvers = {
       }
       const countResult = await query.clone().count().first()
       Sentence.addOrder(query, order)
-      const sentences = await query.offset(offset).limit(LIMIT).debug()
+      const sentences = await query.offset(offset).limit(LIMIT)
       return { count: countResult.count, sentences }
     },
     mySentences: async (parent, { search, offset = 0 }, { user }) => {
