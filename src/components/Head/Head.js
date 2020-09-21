@@ -35,10 +35,12 @@ const Head = () => (
       content={process.env.shareImage}
     />
     <meta key="twitter:card" name="twitter:card" content="summary" />
-    <script
-      async
-      src={`https://www.googletagmanager.com/gtag/js?id=${process.env.googleAnalyticsId}`}
-    />
+    {process.env.googleAnalyticsId ? (
+      <script
+        async
+        src={`https://www.googletagmanager.com/gtag/js?id=${process.env.googleAnalyticsId}`}
+      />
+    ) : null}
     <script
       dangerouslySetInnerHTML={{
         __html: `

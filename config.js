@@ -1,9 +1,12 @@
-require('dotenv').config()
+require('dotenv').config({
+  path: process.env.DOTENV_EXT ? `.env.${process.env.DOTENV_EXT}` : '.env',
+})
 
 module.exports = {
   constants: {
     adminEmail: process.env.ADMIN_EMAIL,
     initialAdminPassword: process.env.INITIAL_ADMIN_PASSWORD,
+    pageSize: Number(process.env.PAGE_SIZE) || 10,
   },
   db: {
     uri: process.env.PG_URI,

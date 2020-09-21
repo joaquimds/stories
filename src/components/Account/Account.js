@@ -34,7 +34,12 @@ const Account = () => {
           </Link>
         </li>
         <li>
-          <button type="button" className="link" onClick={onClickLogout}>
+          <button
+            id="logout"
+            type="button"
+            className="link"
+            onClick={onClickLogout}
+          >
             Log Out
           </button>
         </li>

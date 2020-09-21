@@ -51,7 +51,7 @@ export class Sentence extends Model {
 
   static async getChildren(
     parentId,
-    order = 'longest',
+    order = 'likes',
     offset = 0,
     limit = 3,
     exclude = []
@@ -70,7 +70,11 @@ export class Sentence extends Model {
       case 'newest':
         query.orderBy('id', 'desc')
         break
+      case 'oldest':
+        query.orderBy('id', 'asc')
+        break
       case 'likes':
+      default:
         subquery = Like.query()
           .where({ sentenceId: ref('sentences.id') })
           .count()
@@ -78,60 +82,6 @@ export class Sentence extends Model {
         query.orderBy('likes', 'desc')
         query.orderBy('id', 'asc')
         select.push(subquery)
-        break
-      case 'longest':
-        subquery = Sentence.query()
-          .max('depth')
-          .as('length')
-          .from('sentenceDepths')
-          .withRecursive('sentenceDepths', (qb1) => {
-            qb1
-              .select('id', raw('1 as depth'))
-              .from('sentences as s1')
-              .where({ id: ref('sentences.id') })
-              .union((qb2) => {
-                qb2
-                  .select('sentences.id', raw('depth + 1'))
-                  .from('sentences')
-                  .join(
-                    'sentenceDepths',
-                    'sentences.parentId',
-                    'sentenceDepths.id'
-                  )
-              })
-          })
-        query.orderBy('length', 'desc')
-        query.orderBy('id', 'asc')
-        select.push(subquery)
-        break
-      case 'deepest':
-        subquery = Sentence.query()
-          .max('depth')
-          .as('length')
-          .from('sentenceDepths')
-          .withRecursive('sentenceDepths', (qb1) => {
-            qb1
-              .select('parentId', raw('1 as depth'))
-              .from('sentences as s1')
-              .where({ id: ref('sentences.id') })
-              .union((qb2) => {
-                qb2
-                  .select('sentences.parentId', raw('depth + 1'))
-                  .from('sentences')
-                  .join(
-                    'sentenceDepths',
-                    'sentences.id',
-                    'sentenceDepths.parentId'
-                  )
-              })
-          })
-        query.orderBy('length', 'desc')
-        query.orderBy('id', 'asc')
-        select.push(subquery)
-        break
-      case 'oldest':
-      default:
-        query.orderBy('id', 'asc')
         break
     }
     return query.select(select)

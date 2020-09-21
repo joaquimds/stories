@@ -4,7 +4,6 @@ export const typeDefs = gql`
   enum Order {
     oldest
     newest
-    longest
     likes
   }
   type User {

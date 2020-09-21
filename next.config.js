@@ -7,5 +7,6 @@ module.exports = {
     googleAnalyticsId: config.site.googleAnalyticsId,
     siteUrl: config.site.url,
     shareImage: `${config.site.url}/tree.jpg`,
+    pageSize: config.constants
   },
 }

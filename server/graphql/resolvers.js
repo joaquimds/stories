@@ -31,9 +31,6 @@ export const resolvers = {
         const escapedSearch = search.replace(/%/g, '\\%')
         query.andWhere('title', 'ilike', `%${escapedSearch}%`)
       }
-      if (order === 'longest') {
-        order = 'deepest'
-      }
       const countResult = await query.clone().count().first()
       Sentence.addOrder(query, order)
       const sentences = await query.offset(offset).limit(LIMIT)

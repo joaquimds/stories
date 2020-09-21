@@ -111,7 +111,6 @@ const initApolloClient = (initialState = {}, context = {}) => {
 
 /**
  * Creates and configures the ApolloClient
- * @param  {Object} [initialState={}]
  */
 const createApolloClient = (initialState = {}, context = {}) => {
   const cache = new InMemoryCache({
@@ -120,29 +119,15 @@ const createApolloClient = (initialState = {}, context = {}) => {
         fields: {
           mySentences: {
             keyArgs: ['search'],
-            merge: (existing = {}, incoming = {}, options) => {
-              return {
-                ...incoming,
-                sentences: mergeChildren(
-                  existing.sentences,
-                  incoming.sentences,
-                  options
-                ),
-              }
-            },
+            merge: mergeSentences,
+          },
+          likedSentences: {
+            keyArgs: ['search'],
+            merge: mergeSentences,
           },
           stories: {
             keyArgs: ['search', 'order'],
-            merge: (existing = {}, incoming = {}, options) => {
-              return {
-                ...incoming,
-                sentences: mergeChildren(
-                  existing.sentences,
-                  incoming.sentences,
-                  options
-                ),
-              }
-            },
+            merge: mergeSentences,
           },
         },
       },
@@ -172,6 +157,13 @@ const createApolloClient = (initialState = {}, context = {}) => {
       uri: '/api/graphql',
     }),
   })
+}
+
+const mergeSentences = (existing = {}, incoming = {}, options) => {
+  return {
+    ...incoming,
+    sentences: mergeChildren(existing.sentences, incoming.sentences, options),
+  }
 }
 
 const mergeChildren = (existing = [], incoming = [], { readField }) => {

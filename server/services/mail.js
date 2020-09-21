@@ -1,10 +1,11 @@
-const nodemailer = require('nodemailer')
+import nodemailer from 'nodemailer'
+import config from '../../config'
+import { logger } from './logger'
+
 const {
   email: { host, user, pass },
   site,
-} = require('../../config')
-const config = require('../../config')
-const { logger } = require('./logger')
+} = config
 
 const transporter = nodemailer.createTransport({
   pool: true,
