@@ -11,10 +11,10 @@
     "knex:migrate": "knex -- migrate:latest",
     "knex:seed": "knex -- seed:run",
     "knex:prepare": "npm-run-all knex:migrate knex:seed",
-    "test": "cross-env DOTENV_EXT=testing npm-run-all test:prepare test:run",
-    "test:prepare": "npm-run-all knex:migrate knex:seed",
+    "test": "cross-env DOTENV_EXT=testing npm-run-all knex:migrate test:run",
     "test:run": "npm-run-all -pr dev wdio",
-    "wdio": "wdio run wdio.conf.js"
+    "wdio": "npm-run-all knex:seed wdio:run",
+    "wdio:run": "wdio run wdio.conf.js"
   },
   "dependencies": {
     "@apollo/client": "^3.2.0",

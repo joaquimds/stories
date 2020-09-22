@@ -31,6 +31,8 @@ exports.seed = async (knex) => {
       'The American and the girl with him sat at a table in the shade, outside the building.',
     authorId: 1,
     parentId: 1,
+    title: 'Alternate',
+    slug: slugify('Alternate'),
   })
   await knex('sentences').insert({
     // id: 5,
