@@ -34,11 +34,13 @@ describe('Write', () => {
     expect(sentencePage.loadMoreButton).not.toBeExisting()
     expect(sentencePage.sentences[4]).toHaveText('New sentence')
   })
-  it('should write a newer sentence', () => {
+  it('should write a newer sentence and like it', () => {
     writeComponent.input.setValue('Newer sentence')
     writeComponent.submit.click()
     expect(browser).not.toHaveUrl(`${config.site.url}/Beginning`)
     expect(pageComponent.content[1]).toHaveText('Newer sentence')
+    pageComponent.likeButton.click()
+    expect(pageComponent.unlikeButton).toBeExisting()
     browser.back()
   })
   it('should see newer sentence in all orders', () => {
@@ -65,8 +67,18 @@ describe('Write', () => {
     expect(fragmentsPage.loadMoreButton).not.toBeExisting()
     expect(fragmentsPage.fragments).toHaveLength(10)
   })
+  it('should see newer sentence in favourites', () => {
+    authenticatedPage.accountLink.click()
+    accountPage.favouritesLink.click()
+    expect(fragmentsPage.loadMoreButton).toBeExisting()
+    expect(fragmentsPage.fragments).toHaveLength(3)
+    fragmentsPage.loadMoreButton.click()
+    expect(fragmentsPage.loadMoreButton).not.toBeExisting()
+    expect(fragmentsPage.fragments).toHaveLength(5)
+    expect(fragmentsPage.fragments[4]).toHaveText('Newer sentence')
+  })
   it('should delete sentences', () => {
-    fragmentsPage.fragments[8].click()
+    fragmentsPage.fragments[4].click()
     expect(pageComponent.deleteButton).toBeExisting()
     pageComponent.deleteButton.click()
     expect(browser).toHaveUrl(`${config.site.url}/Beginning`)
@@ -86,5 +98,11 @@ describe('Write', () => {
     accountPage.fragmentsLink.click()
     expect(fragmentsPage.loadMoreButton).not.toBeExisting()
     expect(fragmentsPage.fragments).toHaveLength(8)
+  })
+  it('should not see deleted sentence in favourites', () => {
+    authenticatedPage.accountLink.click()
+    accountPage.favouritesLink.click()
+    expect(fragmentsPage.loadMoreButton).not.toBeExisting()
+    expect(fragmentsPage.fragments).toHaveLength(4)
   })
 })
