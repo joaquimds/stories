@@ -4,7 +4,6 @@ import Link from 'next/link'
 import * as PropTypes from 'prop-types'
 import { useContext, useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
-import WrittenIdsContext from '../../context/WrittenIdsContext'
 import NProgress from '../../services/nprogress'
 import Page from '../Page/Page'
 import Sentence from '../Sentence/Sentence'
@@ -15,7 +14,6 @@ const nprogress = new NProgress()
 
 const StoryTree = ({ slug }) => {
   const [order, setOrder] = useState('likes')
-  const [writtenIds] = useContext(WrittenIdsContext)
   const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
       slug,
@@ -48,14 +46,9 @@ const StoryTree = ({ slug }) => {
   }
 
   const onClickLoadMore = () => {
-    const exclude = writtenIds.filter((id) => {
-      return children && children.some((c) => c.id === id)
-    })
-    const offset = children ? children.length - exclude.length : 0
     fetchMore({
       variables: {
-        offset,
-        exclude,
+        exclude: children ? children.map((c) => c.id) : [],
       },
     })
   }
@@ -140,19 +133,14 @@ StoryTree.propTypes = {
 }
 
 StoryTree.query = gql`
-  query Sentence(
-    $slug: String
-    $order: Order
-    $offset: Int
-    $exclude: [String]
-  ) {
+  query Sentence($slug: String, $order: Order, $exclude: [String]) {
     sentence(slug: $slug) {
       ...SentenceFragment
       parents {
         ...SentenceFragment
       }
       childCount
-      children(order: $order, offset: $offset, exclude: $exclude) {
+      children(order: $order, exclude: $exclude) {
         ...SentenceFragment
       }
     }

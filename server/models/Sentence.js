@@ -49,18 +49,12 @@ export class Sentence extends Model {
     return Number(countQuery.count)
   }
 
-  static async getChildren(
-    parentId,
-    order = 'likes',
-    offset = 0,
-    limit = 3,
-    exclude = []
-  ) {
+  static async getChildren(parentId, order = 'likes', exclude = [], limit = 3) {
     const query = Sentence.query()
       .whereNotIn('id', exclude)
       .andWhere({ parentId })
     Sentence.addOrder(query, order)
-    return query.offset(offset).limit(limit)
+    return query.limit(limit)
   }
 
   static addOrder(query, order = 'oldest') {

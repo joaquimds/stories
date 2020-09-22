@@ -25,7 +25,7 @@ export const resolvers = {
 
       return null
     },
-    stories: async (parent, { search, order, offset = 0 }) => {
+    stories: async (parent, { search, order, exclude = [] }) => {
       const query = Sentence.query().whereNotNull('title')
       if (search) {
         const escapedSearch = search.replace(/%/g, '\\%')
@@ -33,7 +33,9 @@ export const resolvers = {
       }
       const countResult = await query.clone().count().first()
       Sentence.addOrder(query, order)
-      const sentences = await query.offset(offset).limit(LIMIT)
+      const sentences = await query
+        .andWhere((builder) => builder.whereNotIn('id', exclude))
+        .limit(LIMIT)
       return { count: countResult.count, sentences }
     },
     mySentences: async (parent, { search, offset = 0 }, { user }) => {
@@ -96,8 +98,8 @@ export const resolvers = {
     childCount: (sentence) => {
       return Sentence.countChildren(sentence.id)
     },
-    children: (sentence, { order, offset, exclude }) => {
-      return Sentence.getChildren(sentence.id, order, offset, LIMIT, exclude)
+    children: (sentence, { order, exclude }) => {
+      return Sentence.getChildren(sentence.id, order, exclude, LIMIT)
     },
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null
@@ -134,6 +136,10 @@ export const resolvers = {
     },
     saveSentenceMutation: async (parent, args, { user }) => {
       const { id, title } = args
+      const isInteger = /^[0-9]+$/.test(title)
+      if (isInteger) {
+        return { errorCode: 400 }
+      }
       if (!user) {
         return { errorCode: 403 }
       }

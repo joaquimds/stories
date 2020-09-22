@@ -1,9 +1,9 @@
 /* global describe, it, browser, expect */
 import config from '../../config'
-import { accountPage } from '../pageobjects/account.page'
-import { authenticatedPage } from '../pageobjects/authenticated.page'
-import { fragmentsPage } from '../pageobjects/fragments.page'
-import { loginPage } from '../pageobjects/login.page'
+import { accountPage } from '../pages/account.page'
+import { authenticatedPage } from '../pages/authenticated.page'
+import { fragmentsPage } from '../pages/fragments.page'
+import { loginPage } from '../pages/login.page'
 
 describe('Account', () => {
   it('should login with valid credentials', () => {

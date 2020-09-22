@@ -6,7 +6,6 @@ import * as PropTypes from 'prop-types'
 import { useContext, useState } from 'react'
 import { ERRORS } from '../../constants'
 import UserContext from '../../context/UserContext'
-import WrittenIdsContext from '../../context/WrittenIdsContext'
 import Sentence from '../Sentence/Sentence'
 import styles from './Write.module.scss'
 
@@ -25,7 +24,6 @@ const ADD_SENTENCE_MUTATION = gql`
 const Write = ({ parentId }) => {
   const router = useRouter()
   const user = useContext(UserContext)
-  const [writtenIds, setWrittenIds] = useContext(WrittenIdsContext)
   const [content, setContent] = useState('')
   const [error, setError] = useState(null)
   const [addSentence, { loading }] = useMutation(ADD_SENTENCE_MUTATION)
@@ -55,7 +53,6 @@ const Write = ({ parentId }) => {
         setContent('')
         await router.push('/[slug]', `/${newSentence.id}`)
         updateCache(cache, parentId, newSentence)
-        setWrittenIds([...writtenIds, newSentence.id])
       },
     })
   }

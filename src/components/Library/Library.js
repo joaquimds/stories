@@ -21,7 +21,7 @@ const Library = () => {
     const sentences = data && data.stories ? data.stories.sentences : []
     fetchMore({
       variables: {
-        offset: sentences.length,
+        exclude: sentences.map((s) => s.id),
       },
     })
   }
@@ -94,8 +94,8 @@ const buttonClass = (order, current) => {
 }
 
 Library.query = gql`
-  query Stories($search: String, $order: Order, $offset: Int) {
-    stories(search: $search, order: $order, offset: $offset) {
+  query Stories($search: String, $order: Order, $exclude: [String]) {
+    stories(search: $search, order: $order, exclude: $exclude) {
       count
       sentences {
         ...SentenceFragment

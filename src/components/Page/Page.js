@@ -141,7 +141,7 @@ const Page = ({ sentence }) => {
         if (!parent.id) {
           return router.push('/')
         }
-        return router.push('/[slug]', `/${parent.id}`)
+        return router.push('/[slug]', `/${parent.slug || parent.id}`)
       },
     })
   }
@@ -207,6 +207,7 @@ const Page = ({ sentence }) => {
     ? `${sentence.title} | ${process.env.title}`
     : process.env.title
   const description = firstSentence ? firstSentence.content : sentence.content
+  const linkableParents = sentence.parents.filter((p) => p.id)
 
   return (
     <>
@@ -231,7 +232,7 @@ const Page = ({ sentence }) => {
         />
       </Head>
       {sentence.title ? <h1>{sentence.title}</h1> : null}
-      {sentence.parents.map((p) => (
+      {linkableParents.map((p) => (
         <p key={p.id} className={styles.content}>
           <Link href="/[slug]" as={`/${p.slug || p.id}`}>
             <a>{p.content}</a>

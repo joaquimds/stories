@@ -16,7 +16,7 @@ export const typeDefs = gql`
     intro: String!
     parents: [Sentence]!
     childCount: Int!
-    children(order: Order, offset: Int, exclude: [String]): [Sentence]!
+    children(order: Order, exclude: [String]): [Sentence]!
     author: User
     title: String
     slug: String
@@ -28,7 +28,7 @@ export const typeDefs = gql`
   }
   type Query {
     sentence(slug: String): Sentence
-    stories(search: String, order: Order, offset: Int): SentenceList!
+    stories(search: String, order: Order, exclude: [String]): SentenceList!
     mySentences(search: String, offset: Int): SentenceList!
     likedSentences(search: String, offset: Int): SentenceList!
   }

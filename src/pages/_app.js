@@ -7,7 +7,6 @@ import Footer from '../components/Footer/Footer'
 import Head from '../components/Head/Head'
 import Navbar from '../components/Navbar/Navbar'
 import UserContext from '../context/UserContext'
-import WrittenIdsContext from '../context/WrittenIdsContext'
 import NProgress from '../services/nprogress'
 
 const nprogress = new NProgress()
@@ -15,7 +14,6 @@ const nprogress = new NProgress()
 const MyApp = ({ Component, pageProps, user: initialUser }) => {
   const router = useRouter()
   const [user] = useState(initialUser)
-  const writtenIdsState = useState([])
 
   useEffect(() => {
     Router.events.on('routeChangeStart', nprogress.start)
@@ -31,16 +29,14 @@ const MyApp = ({ Component, pageProps, user: initialUser }) => {
   const path = router.asPath.split('#')[0]
   return (
     <UserContext.Provider value={user}>
-      <WrittenIdsContext.Provider value={writtenIdsState}>
-        <div className={`root root--${path}`}>
-          <Head />
-          <Navbar />
-          <main className="main">
-            <Component {...pageProps} />
-          </main>
-          <Footer />
-        </div>
-      </WrittenIdsContext.Provider>
+      <div className={`root root--${path}`}>
+        <Head />
+        <Navbar />
+        <main className="main">
+          <Component {...pageProps} />
+        </main>
+        <Footer />
+      </div>
     </UserContext.Provider>
   )
 }

@@ -48,16 +48,4 @@ const Account = () => {
   )
 }
 
-Account.query = gql`
-  query MySentences($search: String, $offset: Int) {
-    mySentences(search: $search, offset: $offset) {
-      count
-      sentences {
-        ...SentenceFragment
-      }
-    }
-  }
-  ${Sentence.fragments.sentence}
-`
-
 export default Account

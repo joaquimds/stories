@@ -7,7 +7,7 @@ import AuthenticatedPage from './authenticated.page'
  */
 export default class FragmentsPage extends AuthenticatedPage {
   get fragments() {
-    return $$('[class^="AccountSentenceList_sentence__"]')
+    return $$('[class^="AccountSentenceList_sentence__"] a')
   }
 
   get loadMoreButton() {

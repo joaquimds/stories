@@ -37,16 +37,16 @@ exports.seed = async (knex) => {
     content:
       'It was very hot and the express from Barcelona would come in forty minutes.',
     authorId: 1,
-    parentId: 3,
-    title: 'Ending',
-    slug: slugify('Ending'),
+    parentId: 1,
   })
   await knex('sentences').insert({
     // id: 6,
     content:
       'It stopped at this junction for two minutes and went on to Madrid.',
     authorId: 1,
-    parentId: 5,
+    parentId: 3,
+    title: 'Ending',
+    slug: slugify('Ending'),
   })
   await knex('sentences').insert({
     // id: 7,
