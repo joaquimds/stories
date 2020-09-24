@@ -2,28 +2,32 @@ import { Like } from '../models/Like'
 import { Sentence } from '../models/Sentence'
 import { User } from '../models/User'
 import { logger } from '../services/logger'
+import * as paths from '../util/paths'
 import { slugify } from '../util/text'
 
 const LIMIT = 3
 
 export const resolvers = {
   Query: {
-    sentence: async (parent, { slug }) => {
+    sentence: async (parent, { slug, path }) => {
       if (!slug) {
-        return { id: null }
+        slug = '0'
       }
 
-      const sentence = await Sentence.query().findOne({ slug })
-      if (sentence) {
-        return sentence
+      let sentence = await Sentence.query().findOne({ slug })
+      if (!sentence) {
+        const isInteger = /^[0-9]+$/.test(slug)
+        if (isInteger) {
+          sentence = await Sentence.query().findById(slug)
+        }
       }
 
-      const isInteger = /^[0-9]+$/.test(slug)
-      if (isInteger) {
-        return Sentence.query().findById(slug)
+      if (!sentence) {
+        return null
       }
 
-      return null
+      sentence.path = path
+      return sentence
     },
     stories: async (parent, { search, order, exclude = [] }) => {
       const query = Sentence.query().whereNotNull('title')
@@ -73,13 +77,13 @@ export const resolvers = {
   },
   Sentence: {
     content: ({ id, content, authorId }) => {
-      if (!id) {
+      if (id === '0') {
         return ''
       }
       return authorId ? content : '[deleted]'
     },
     intro: async (sentence) => {
-      if (!sentence.id) {
+      if (sentence.id === '0') {
         return ''
       }
       const parents = await sentence.getParents()
@@ -88,21 +92,32 @@ export const resolvers = {
       })[0]
       return firstParent ? firstParent.content : sentence.content
     },
-    parents: async (sentence) => {
-      if (!sentence.id) {
+    parents: (sentence) => {
+      if (sentence.id === '0') {
         return []
       }
-      const parents = await sentence.getParents()
-      return [{ id: null }, ...parents]
+      return sentence.getParents(sentence.path)
     },
     childCount: (sentence) => {
-      return Sentence.countChildren(sentence.id)
+      return sentence.countChildren()
     },
-    children: (sentence, { order, exclude }) => {
-      return Sentence.getChildren(sentence.id, order, exclude, LIMIT)
+    children: async (sentence, { order, exclude }) => {
+      const children = await sentence.getChildren(order, exclude, LIMIT)
+      return children.map((c) => {
+        if (c.parentCount <= 1) {
+          return c
+        }
+        const path = paths.parsePath(sentence.path)
+        const newPath = paths.addPathStep(path, c.id, sentence.id)
+        c.permalink = `/${c.id}?path=${paths.printPath(newPath)}`
+        return c
+      })
     },
     author: ({ authorId }) => {
       return authorId ? User.query().findById(authorId) : null
+    },
+    permalink: ({ id, permalink }) => {
+      return permalink || `/${id}`
     },
     liked: async ({ id }, args, { user }) => {
       if (!user || !id) {

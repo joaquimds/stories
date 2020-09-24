@@ -207,7 +207,7 @@ const Page = ({ sentence }) => {
     ? `${sentence.title} | ${process.env.title}`
     : process.env.title
   const description = firstSentence ? firstSentence.content : sentence.content
-  const linkableParents = sentence.parents.filter((p) => p.id)
+  const linkableParents = sentence.parents.filter((p) => p.content)
 
   return (
     <>
@@ -234,7 +234,7 @@ const Page = ({ sentence }) => {
       {sentence.title ? <h1>{sentence.title}</h1> : null}
       {linkableParents.map((p) => (
         <p key={p.id} className={styles.content}>
-          <Link href="/[slug]" as={`/${p.slug || p.id}`}>
+          <Link href="/[slug]" as={`/${p.id}`}>
             <a>{p.content}</a>
           </Link>{' '}
         </p>

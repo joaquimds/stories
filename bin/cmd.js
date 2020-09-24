@@ -5,7 +5,7 @@ const program = require('commander')
 const { runCommand, knex, client } = require('../server')
 
 program
-  .command('create:fixtures')
+  .command('fixtures:create')
   .action((username, password) => run('createFixtures', username, password))
 
 async function run(name, ...args) {

@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
 import Link from 'next/link'
 import * as PropTypes from 'prop-types'
-import { useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
 import NProgress from '../../services/nprogress'
 import Page from '../Page/Page'
@@ -12,11 +12,12 @@ import styles from './StoryTree.module.scss'
 
 const nprogress = new NProgress()
 
-const StoryTree = ({ slug }) => {
+const StoryTree = ({ slug, path }) => {
   const [order, setOrder] = useState('likes')
   const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
       slug,
+      path,
       order,
     },
   })
@@ -130,11 +131,17 @@ const buttonClass = (order, current) => {
 
 StoryTree.propTypes = {
   slug: PropTypes.string,
+  path: PropTypes.string,
 }
 
 StoryTree.query = gql`
-  query Sentence($slug: String, $order: Order, $exclude: [String]) {
-    sentence(slug: $slug) {
+  query Sentence(
+    $slug: String
+    $path: String
+    $order: Order
+    $exclude: [String]
+  ) {
+    sentence(slug: $slug, path: $path) {
       ...SentenceFragment
       parents {
         ...SentenceFragment

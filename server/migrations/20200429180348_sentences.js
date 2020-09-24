@@ -1,15 +1,21 @@
 exports.up = (knex) => {
-  return knex.schema.createTable('sentences', (table) => {
-    table.bigIncrements()
-    table.text('content').notNullable()
-    table.text('title')
-    table.text('slug').unique()
-    table.bigInteger('authorId')
-    table.bigInteger('parentId')
-    table.dateTime('date').defaultTo(knex.fn.now())
-  })
+  return knex.schema
+    .createTable('sentences', (table) => {
+      table.bigIncrements()
+      table.text('content').notNullable()
+      table.text('title')
+      table.text('slug').unique()
+      table.bigInteger('authorId')
+      table.dateTime('date').defaultTo(knex.fn.now())
+    })
+    .createTable('sentenceLinks', (table) => {
+      table.bigIncrements()
+      table.bigInteger('from').index().notNullable()
+      table.bigInteger('to').index().notNullable()
+      table.unique(['from', 'to'])
+    })
 }
 
 exports.down = (knex) => {
-  return knex.schema.dropTable('sentences')
+  return knex.schema.dropTable('sentenceLinks').dropTable('sentences')
 }

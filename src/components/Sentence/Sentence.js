@@ -7,7 +7,7 @@ const Sentence = ({ sentence }) => {
   return (
     <div className={styles.card}>
       <p>
-        <Link href="/[slug]" as={`/${sentence.slug || sentence.id}`}>
+        <Link href="/[slug]" as={sentence.permalink}>
           <a className={styles.link}>{sentence.content}</a>
         </Link>
       </p>
@@ -18,6 +18,7 @@ const SentenceType = {
   id: PropTypes.string,
   content: PropTypes.string,
   slug: PropTypes.string,
+  permalink: PropTypes.string,
   author: PropTypes.shape({
     id: PropTypes.string,
     name: PropTypes.string,
@@ -28,6 +29,7 @@ Sentence.propTypes = {
     id: PropTypes.string,
     content: PropTypes.string,
     slug: PropTypes.string,
+    permalink: PropTypes.string,
     children: PropTypes.arrayOf(PropTypes.shape(SentenceType)),
   }),
 }
@@ -36,6 +38,7 @@ Sentence.fragments = {
     fragment SentenceFragment on Sentence {
       id
       slug
+      permalink
       title
       content
       author {
