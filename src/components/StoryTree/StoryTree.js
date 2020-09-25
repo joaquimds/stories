@@ -12,12 +12,12 @@ import styles from './StoryTree.module.scss'
 
 const nprogress = new NProgress()
 
-const StoryTree = ({ slug, path }) => {
+const StoryTree = ({ slug }) => {
+  console.log('rendering', slug)
   const [order, setOrder] = useState('likes')
   const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
       slug,
-      path,
       order,
     },
   })
@@ -46,6 +46,7 @@ const StoryTree = ({ slug, path }) => {
     )
   }
 
+  console.log('p', sentence.parents)
   const onClickLoadMore = () => {
     fetchMore({
       variables: {
@@ -131,17 +132,11 @@ const buttonClass = (order, current) => {
 
 StoryTree.propTypes = {
   slug: PropTypes.string,
-  path: PropTypes.string,
 }
 
 StoryTree.query = gql`
-  query Sentence(
-    $slug: String
-    $path: String
-    $order: Order
-    $exclude: [String]
-  ) {
-    sentence(slug: $slug, path: $path) {
+  query Sentence($slug: String, $order: Order, $exclude: [String]) {
+    sentence(slug: $slug) {
       ...SentenceFragment
       parents {
         ...SentenceFragment

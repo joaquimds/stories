@@ -78,6 +78,10 @@ exports.seed = async (knex) => {
     from: 4,
     to: 6,
   })
+  await knex('sentenceLinks').insert({
+    from: 6,
+    to: 1,
+  })
   await knex('sentences').insert({
     // id: 7,
     content: '"What should we drink?" the girl asked.',

@@ -1,5 +1,5 @@
-export const parsePath = (path = '') => {
-  return path
+export const parsePath = (path) => {
+  return (path || '')
     .split(',')
     .map((part) => part.split(':'))
     .filter((step) => step.length === 3)

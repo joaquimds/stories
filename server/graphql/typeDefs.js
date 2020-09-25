@@ -28,7 +28,7 @@ export const typeDefs = gql`
     sentences: [Sentence]
   }
   type Query {
-    sentence(slug: String, path: String): Sentence
+    sentence(slug: String): Sentence
     stories(search: String, order: Order, exclude: [String]): SentenceList!
     mySentences(search: String, offset: Int): SentenceList!
     likedSentences(search: String, offset: Int): SentenceList!

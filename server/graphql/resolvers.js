@@ -1,3 +1,4 @@
+import qs from 'querystring'
 import { Like } from '../models/Like'
 import { Sentence } from '../models/Sentence'
 import { User } from '../models/User'
@@ -9,10 +10,15 @@ const LIMIT = 3
 
 export const resolvers = {
   Query: {
-    sentence: async (parent, { slug, path }) => {
-      if (!slug) {
-        slug = '0'
+    sentence: async (parent, { slug: permalink }) => {
+      if (!permalink) {
+        permalink = '/0'
       }
+
+      const parts = permalink.split('?')
+      const slug = parts[0].substring(1)
+      const params = qs.decode(parts[1] || '')
+      const path = params.path || ''
 
       let sentence = await Sentence.query().findOne({ slug })
       if (!sentence) {
@@ -104,12 +110,13 @@ export const resolvers = {
     children: async (sentence, { order, exclude }) => {
       const children = await sentence.getChildren(order, exclude, LIMIT)
       return children.map((c) => {
-        if (c.parentCount <= 1) {
-          return c
+        let path = paths.parsePath(sentence.path)
+        if (c.defaultParent !== sentence.id) {
+          path = paths.addPathStep(path, c.id, sentence.id)
         }
-        const path = paths.parsePath(sentence.path)
-        const newPath = paths.addPathStep(path, c.id, sentence.id)
-        c.permalink = `/${c.id}?path=${paths.printPath(newPath)}`
+        if (path.length) {
+          c.permalink = `/${c.id}?path=${paths.printPath(path)}`
+        }
         return c
       })
     },

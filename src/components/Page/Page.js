@@ -232,8 +232,8 @@ const Page = ({ sentence }) => {
         />
       </Head>
       {sentence.title ? <h1>{sentence.title}</h1> : null}
-      {linkableParents.map((p) => (
-        <p key={p.id} className={styles.content}>
+      {linkableParents.map((p, i) => (
+        <p key={i} className={styles.content}>
           <Link href="/[slug]" as={`/${p.id}`}>
             <a>{p.content}</a>
           </Link>{' '}
@@ -347,7 +347,7 @@ const renderAuthors = (sentence) => {
     if (authorCounts[a] > authorCounts[b]) {
       return -1
     }
-    if (authorCounts[a] > authorCounts[b]) {
+    if (authorCounts[a] < authorCounts[b]) {
       return 1
     }
     return authorIndices[a] < authorIndices[b] ? -1 : 1

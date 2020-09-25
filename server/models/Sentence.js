@@ -32,51 +32,39 @@ export class Sentence extends Model {
     const allParents = await Sentence.query()
       .select('*')
       .from('parents')
+      .join('sentences', 'parents.from', 'sentences.id')
       .withRecursive('parents', (qb1) => {
         qb1
-          .select('sentences.*', 'sentence_links.from', raw('1 as depth'))
-          .from('sentences')
-          .join('sentence_links', 'sentence_links.from', 'sentences.id')
+          .select('sentence_links.*')
+          .from('sentence_links')
           .where('sentence_links.to', '=', this.id)
           .union((qb2) => {
             qb2
-              .select('sentences.*', 'sentence_links.from', raw('depth + 1'))
-              .from('sentences')
-              .join('sentence_links', 'sentence_links.from', 'sentences.id')
+              .select('sentence_links.*')
+              .from('sentence_links')
               .join('parents', 'sentence_links.to', 'parents.from')
           })
       })
-      .orderBy('depth', 'desc')
-      .orderBy('id', 'asc')
-    const byDepth = {}
-    for (const parent of allParents) {
-      if (!byDepth[parent.depth]) {
-        byDepth[parent.depth] = []
-      }
-      byDepth[parent.depth].push(parent)
-    }
-    let child = { id: this.id, depth: 0 }
+      .orderBy('parents.id', 'asc')
+    let childId = this.id
     const parents = []
     const counts = {}
-    while (child) {
-      const { id: childId, depth: childDepth } = child
+    while (childId) {
       counts[childId] = counts[childId] ? counts[childId] + 1 : 1
       const currentPathInfo = pathInfo.find(
-        ({ from, count }) =>
-          childId === from && Number(count) === counts[childId]
+        ({ from, count }) => childId === from && count === counts[childId]
       )
       let parent
       if (currentPathInfo) {
         parent = allParents.find(({ id }) => id === currentPathInfo.to)
       }
       if (!parent) {
-        const parentsForDepth = byDepth[childDepth + 1]
-        parent = parentsForDepth ? parentsForDepth[0] : null
+        parent = allParents.find(({ to }) => to === childId)
       }
       if (parent) {
         parents.push(parent)
       }
-      child = parent
+      childId = parent?.id
     }
     return parents.reverse()
   }
@@ -90,20 +78,21 @@ export class Sentence extends Model {
 
   async getChildren(order = 'likes', exclude = [], limit = 3) {
     const subquery = SentenceLink.query()
+      .select('from')
       .where({ to: ref('sentences.id') })
-      .count()
-      .as('parentCount')
+      .orderBy('id', 'asc')
+      .limit(1)
+      .as('defaultParent')
     const query = Sentence.query()
       .select(['sentences.*', subquery])
       .join('sentenceLinks', 'sentenceLinks.to', 'sentences.id')
       .whereNotIn('sentences.id', exclude)
       .andWhere('sentenceLinks.from', '=', this.id)
     Sentence.addOrder(query, order)
-    return query.limit(limit)
+    return query.limit(limit).debug()
   }
 
   static addOrder(query, order = 'oldest') {
-    const select = ['sentences.*']
     let subquery
     switch (order) {
       case 'newest':
@@ -120,9 +109,9 @@ export class Sentence extends Model {
           .as('likes')
         query.orderBy('likes', 'desc')
         query.orderBy('id', 'asc')
-        select.push(subquery)
+        query.select(subquery)
         break
     }
-    return query.select(select)
+    return query
   }
 }
