@@ -1,7 +1,5 @@
-import { gql } from '@apollo/client/core'
 import Link from 'next/link'
 import NProgress from '../../services/nprogress'
-import Sentence from '../Sentence/Sentence'
 import styles from './Account.module.scss'
 
 const Account = () => {

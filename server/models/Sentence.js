@@ -1,5 +1,4 @@
-import { Model, raw, ref } from 'objection'
-import { parsePath } from '../util/paths'
+import { Model, ref } from 'objection'
 import { Like } from './Like'
 import { SentenceLink } from './SentenceLink'
 
@@ -27,8 +26,7 @@ export class Sentence extends Model {
     },
   }
 
-  async getParents(path = '') {
-    const pathInfo = parsePath(path)
+  async getParents(thread = []) {
     const allParents = await Sentence.query()
       .select('*')
       .from('parents')
@@ -51,12 +49,12 @@ export class Sentence extends Model {
     const counts = {}
     while (childId) {
       counts[childId] = counts[childId] ? counts[childId] + 1 : 1
-      const currentPathInfo = pathInfo.find(
+      const currentThreadStep = thread.find(
         ({ from, count }) => childId === from && count === counts[childId]
       )
       let parent
-      if (currentPathInfo) {
-        parent = allParents.find(({ id }) => id === currentPathInfo.to)
+      if (currentThreadStep) {
+        parent = allParents.find(({ id }) => id === currentThreadStep.to)
       }
       if (!parent) {
         parent = allParents.find(({ to }) => to === childId)

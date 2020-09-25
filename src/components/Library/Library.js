@@ -2,7 +2,7 @@ import { useQuery, gql } from '@apollo/client'
 import Link from 'next/link'
 import { useState } from 'react'
 import { ORDERS } from '../../constants'
-import Sentence from '../Sentence/Sentence'
+import StoryLink from '../StoryLink/StoryLink'
 import styles from './Library.module.scss'
 
 const Library = () => {
@@ -103,7 +103,7 @@ Library.query = gql`
       }
     }
   }
-  ${Sentence.fragments.sentence}
+  ${StoryLink.fragments.sentence}
 `
 
 export default Library

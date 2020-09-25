@@ -6,18 +6,18 @@ import { useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
 import NProgress from '../../services/nprogress'
 import Page from '../Page/Page'
-import Sentence from '../Sentence/Sentence'
+import StoryLink from '../StoryLink/StoryLink'
 import Write from '../Write/Write'
 import styles from './StoryTree.module.scss'
 
 const nprogress = new NProgress()
 
-const StoryTree = ({ slug }) => {
-  console.log('rendering', slug)
+const StoryTree = ({ permalink }) => {
+  console.log('rendering', permalink)
   const [order, setOrder] = useState('likes')
   const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
-      slug,
+      permalink,
       order,
     },
   })
@@ -29,8 +29,8 @@ const StoryTree = ({ slug }) => {
     nprogress.done()
   }, [loading])
 
-  const { sentence, children, childCount } = extractSentences(data)
-  if (!sentence) {
+  const { story, children, childCount } = extractStory(data)
+  if (!story) {
     if (!loading) {
       return (
         <div className={styles.container}>
@@ -46,7 +46,7 @@ const StoryTree = ({ slug }) => {
     )
   }
 
-  console.log('p', sentence.parents)
+  console.log('b', story.beginning)
   const onClickLoadMore = () => {
     fetchMore({
       variables: {
@@ -59,8 +59,8 @@ const StoryTree = ({ slug }) => {
     <div className={styles.container}>
       <div className={`${styles.half} ${styles.top}`}>
         <div className={styles.content}>
-          {slug ? (
-            <Page sentence={sentence} />
+          {permalink ? (
+            <Page story={story} />
           ) : (
             <p className={styles.begin}>
               (choose a beginning, start a new story, or{' '}
@@ -93,7 +93,7 @@ const StoryTree = ({ slug }) => {
               <ul className={styles.children}>
                 {children.map((c) => (
                   <li key={c.id}>
-                    <Sentence sentence={c} />
+                    <StoryLink story={c} />
                   </li>
                 ))}
               </ul>
@@ -109,7 +109,7 @@ const StoryTree = ({ slug }) => {
                 </div>
               ) : null}
               <div className={styles.write}>
-                <Write parentId={sentence.id} />
+                <Write parentId={story.id} />
               </div>
             </>
           ) : null}
@@ -119,11 +119,11 @@ const StoryTree = ({ slug }) => {
   )
 }
 
-const extractSentences = (data) => {
-  const sentence = data && data.sentence ? data.sentence : null
-  const children = sentence && sentence.children
-  const childCount = sentence && sentence.childCount
-  return { sentence, children, childCount }
+const extractStory = (data) => {
+  const story = data && data.story ? data.story : null
+  const children = story && story.children
+  const childCount = story && story.childCount
+  return { story, children, childCount }
 }
 
 const buttonClass = (order, current) => {
@@ -131,23 +131,40 @@ const buttonClass = (order, current) => {
 }
 
 StoryTree.propTypes = {
-  slug: PropTypes.string,
+  permalink: PropTypes.string,
+}
+
+StoryTree.fragments = {
+  story: gql`
+    fragment StoryFragment on Story {
+      id
+      ending {
+        ...SentenceFragment
+      }
+    }
+    ${StoryLink.fragments.sentence}
+  `,
 }
 
 StoryTree.query = gql`
-  query Sentence($slug: String, $order: Order, $exclude: [String]) {
-    sentence(slug: $slug) {
-      ...SentenceFragment
-      parents {
+  query Story($permalink: String, $order: Order, $exclude: [String]) {
+    story(permalink: $permalink) {
+      id
+      title
+      liked
+      beginning {
+        ...StoryFragment
+      }
+      ending {
         ...SentenceFragment
       }
       childCount
       children(order: $order, exclude: $exclude) {
-        ...SentenceFragment
+        ...StoryFragment
       }
     }
   }
-  ${Sentence.fragments.sentence}
+  ${StoryTree.fragments.story}
 `
 
 export default StoryTree

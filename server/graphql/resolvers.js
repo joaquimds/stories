@@ -3,22 +3,22 @@ import { Like } from '../models/Like'
 import { Sentence } from '../models/Sentence'
 import { User } from '../models/User'
 import { logger } from '../services/logger'
-import * as paths from '../util/paths'
 import { slugify } from '../util/text'
+import * as threads from '../util/threads'
 
 const LIMIT = 3
 
 export const resolvers = {
   Query: {
-    sentence: async (parent, { slug: permalink }) => {
+    story: async (parent, { permalink }) => {
       if (!permalink) {
         permalink = '/0'
       }
 
-      const parts = permalink.split('?')
-      const slug = parts[0].substring(1)
-      const params = qs.decode(parts[1] || '')
-      const path = params.path || ''
+      const [path, query] = permalink.split('?')
+      const slug = path.substring(1)
+      const params = qs.decode(query || '')
+      const thread = threads.parseThread(params.thread || '')
 
       let sentence = await Sentence.query().findOne({ slug })
       if (!sentence) {
@@ -32,8 +32,7 @@ export const resolvers = {
         return null
       }
 
-      sentence.path = path
-      return sentence
+      return { id: permalink, ending: sentence, thread }
     },
     stories: async (parent, { search, order, exclude = [] }) => {
       const query = Sentence.query().whereNotNull('title')
@@ -81,52 +80,45 @@ export const resolvers = {
       }
     },
   },
-  Sentence: {
-    content: ({ id, content, authorId }) => {
-      if (id === '0') {
+  Story: {
+    intro: async ({ ending, thread }) => {
+      if (ending.id === '0') {
         return ''
       }
-      return authorId ? content : '[deleted]'
-    },
-    intro: async (sentence) => {
-      if (sentence.id === '0') {
-        return ''
-      }
-      const parents = await sentence.getParents()
+      const parents = await ending.getParents(thread)
       const firstParent = parents.filter(({ content, authorId }) => {
         return content && authorId
       })[0]
-      return firstParent ? firstParent.content : sentence.content
+      return firstParent ? firstParent.content : ending.content
     },
-    parents: (sentence) => {
-      if (sentence.id === '0') {
+    beginning: async ({ ending, thread }) => {
+      if (ending.id === '0') {
         return []
       }
-      return sentence.getParents(sentence.path)
-    },
-    childCount: (sentence) => {
-      return sentence.countChildren()
-    },
-    children: async (sentence, { order, exclude }) => {
-      const children = await sentence.getChildren(order, exclude, LIMIT)
-      return children.map((c) => {
-        let path = paths.parsePath(sentence.path)
-        if (c.defaultParent !== sentence.id) {
-          path = paths.addPathStep(path, c.id, sentence.id)
+      const parents = await ending.getParents(thread)
+      return parents.map((ending) => {
+        return {
+          id: `/${ending.id}`,
+          ending,
         }
-        if (path.length) {
-          c.permalink = `/${c.id}?path=${paths.printPath(path)}`
-        }
-        return c
       })
     },
-    author: ({ authorId }) => {
-      return authorId ? User.query().findById(authorId) : null
+    childCount: ({ ending }) => {
+      return ending.countChildren()
     },
-    permalink: ({ id, permalink }) => {
-      return permalink || `/${id}`
+    children: async ({ ending, thread }, { order, exclude }) => {
+      const children = await ending.getChildren(order, exclude, LIMIT)
+      return children.map((c) => {
+        if (c.defaultParent !== ending.id) {
+          thread = threads.addThreadStep(thread, c.id, ending.id)
+        }
+        const id = thread.length
+          ? `/${c.id}?thread=${threads.printThread(thread)}`
+          : `/${c.id}`
+        return { id, ending: c }
+      })
     },
-    liked: async ({ id }, args, { user }) => {
+    liked: async ({ ending: { id } }, args, { user }) => {
       if (!user || !id) {
         return false
       }
@@ -135,6 +127,17 @@ export const resolvers = {
         userId: user.id,
       })
       return Boolean(like)
+    },
+  },
+  Sentence: {
+    content: ({ id, content, authorId }) => {
+      if (id === '0') {
+        return ''
+      }
+      return authorId ? content : '[deleted]'
+    },
+    author: ({ authorId }) => {
+      return authorId ? User.query().findById(authorId) : null
     },
   },
   Mutation: {

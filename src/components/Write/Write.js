@@ -6,7 +6,7 @@ import * as PropTypes from 'prop-types'
 import { useContext, useState } from 'react'
 import { ERRORS } from '../../constants'
 import UserContext from '../../context/UserContext'
-import Sentence from '../Sentence/Sentence'
+import StoryLink from '../StoryLink/StoryLink'
 import styles from './Write.module.scss'
 
 const ADD_SENTENCE_MUTATION = gql`
@@ -18,7 +18,7 @@ const ADD_SENTENCE_MUTATION = gql`
       }
     }
   }
-  ${Sentence.fragments.sentence}
+  ${StoryLink.fragments.sentence}
 `
 
 const Write = ({ parentId }) => {
@@ -85,7 +85,7 @@ const Write = ({ parentId }) => {
 const updateCache = (cache, parentId, newSentence) => {
   const newSentenceRef = cache.writeFragment({
     data: newSentence,
-    fragment: Sentence.fragments.sentence,
+    fragment: StoryLink.fragments.sentence,
   })
   cache.modify({
     id: `Sentence:${parentId}`,

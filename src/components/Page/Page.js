@@ -3,10 +3,11 @@ import gql from 'graphql-tag'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import PropTypes from 'prop-types'
 import { useContext, useState } from 'react'
 import { ERRORS } from '../../constants'
 import UserContext from '../../context/UserContext'
-import Sentence from '../Sentence/Sentence'
+import StoryLink from '../StoryLink/StoryLink'
 import styles from './Page.module.scss'
 
 const LIKE_SENTENCE_MUTATION = gql`
@@ -35,10 +36,10 @@ const DELETE_SENTENCE_MUTATION = gql`
       }
     }
   }
-  ${Sentence.fragments.sentence}
+  ${StoryLink.fragments.sentence}
 `
 
-const Page = ({ sentence }) => {
+const Page = ({ story }) => {
   const router = useRouter()
   const user = useContext(UserContext)
 
@@ -48,8 +49,10 @@ const Page = ({ sentence }) => {
   const [error, setError] = useState(null)
   const [title, setTitle] = useState('')
 
+  const { beginning, ending } = story
+
   const [deleteSentence, { loading }] = useMutation(DELETE_SENTENCE_MUTATION, {
-    variables: { id: sentence.id },
+    variables: { id: story.ending.id },
   })
 
   const [saveSentence, { loading: saveLoading }] = useMutation(
@@ -60,7 +63,7 @@ const Page = ({ sentence }) => {
     LIKE_SENTENCE_MUTATION
   )
 
-  const isAuthor = user && sentence.author && sentence.author.id === user.id
+  const isAuthor = user && ending.author && ending.author.id === user.id
   const setErrorFromCode = (errorCode) => {
     setError(ERRORS[errorCode] || `Unknown error ${errorCode}`)
   }
@@ -68,7 +71,7 @@ const Page = ({ sentence }) => {
   const onSubmitSave = async (e) => {
     e.preventDefault()
     await saveSentence({
-      variables: { id: sentence.id, title },
+      variables: { id: story.id, title },
       update(
         cache,
         {
@@ -109,11 +112,11 @@ const Page = ({ sentence }) => {
         if (updated) {
           return cache.writeFragment({
             id: cache.identify(updated),
-            fragment: Sentence.fragments.sentence,
+            fragment: StoryLink.fragments.sentence,
             data: updated,
           })
         }
-        const parent = sentence.parents[sentence.parents.length - 1]
+        const parent = beginning[beginning.length - 1]
         cache.modify({
           id: `Sentence:${parent.id}`,
           fields: {
@@ -122,7 +125,7 @@ const Page = ({ sentence }) => {
             },
             children(childRefs, { readField }) {
               return childRefs.filter(
-                (childRef) => readField('id', childRef) !== sentence.id
+                (childRef) => readField('id', childRef) !== ending.id
               )
             },
           },
@@ -131,17 +134,17 @@ const Page = ({ sentence }) => {
           id: 'ROOT_QUERY',
           fields: {
             mySentences(sentenceList, options) {
-              return removeSentence(sentence.id, sentenceList, options)
+              return removeSentence(ending.id, sentenceList, options)
             },
             likedSentences(sentenceList, options) {
-              return removeSentence(sentence.id, sentenceList, options)
+              return removeSentence(ending.id, sentenceList, options)
             },
           },
         })
-        if (!parent.id) {
+        if (parent.id === '/0') {
           return router.push('/')
         }
-        return router.push('/[slug]', `/${parent.slug || parent.id}`)
+        return router.push('/[slug]', `/${parent.id}`)
       },
     })
   }
@@ -149,8 +152,8 @@ const Page = ({ sentence }) => {
   const onClickLike = async () => {
     await likeSentence({
       variables: {
-        id: sentence.id,
-        like: !sentence.liked,
+        id: story.id,
+        like: !story.liked,
       },
       update(
         cache,
@@ -164,10 +167,10 @@ const Page = ({ sentence }) => {
           return setErrorFromCode(errorCode)
         }
         cache.modify({
-          id: `Sentence:${sentence.id}`,
+          id: `Story:${story.id}`,
           fields: {
             liked() {
-              return !sentence.liked
+              return !story.liked
             },
           },
         })
@@ -186,7 +189,7 @@ const Page = ({ sentence }) => {
   const onClickReport = async () => {
     setReportLoading(true)
     try {
-      const response = await fetch(`/api/report/${sentence.id}`, {
+      const response = await fetch(`/api/report/${ending.id}`, {
         method: 'POST',
         credentials: 'same-origin',
       })
@@ -200,14 +203,15 @@ const Page = ({ sentence }) => {
     }
   }
 
-  const firstSentence = sentence.parents.filter(({ content, author }) => {
+  const parents = beginning.map(({ ending }) => ending)
+  const firstSentence = parents.filter(({ content, author }) => {
     return content && author
   })[0]
-  const metaTitle = sentence.title
-    ? `${sentence.title} | ${process.env.title}`
+  const metaTitle = story.title
+    ? `${story.title} | ${process.env.title}`
     : process.env.title
-  const description = firstSentence ? firstSentence.content : sentence.content
-  const linkableParents = sentence.parents.filter((p) => p.content)
+  const description = firstSentence ? firstSentence.content : ending.content
+  const linkableParents = parents.filter((p) => p.content)
 
   return (
     <>
@@ -216,7 +220,7 @@ const Page = ({ sentence }) => {
         <meta
           key="og:url"
           property="og:url"
-          content={`${process.env.siteUrl}/${sentence.slug || sentence.id}`}
+          content={`${process.env.siteUrl}${story.id}`}
         />
         <meta key="og:title" property="og:title" content={metaTitle} />
         <meta
@@ -231,7 +235,7 @@ const Page = ({ sentence }) => {
           content={description}
         />
       </Head>
-      {sentence.title ? <h1>{sentence.title}</h1> : null}
+      {story.title ? <h1>{story.title}</h1> : null}
       {linkableParents.map((p, i) => (
         <p key={i} className={styles.content}>
           <Link href="/[slug]" as={`/${p.id}`}>
@@ -239,8 +243,8 @@ const Page = ({ sentence }) => {
           </Link>{' '}
         </p>
       ))}
-      <p className={styles.content}>{sentence.content}</p>
-      {renderAuthors(sentence)}
+      <p className={styles.content}>{ending.content}</p>
+      {renderAuthors(story)}
       {isReported ? (
         <p className={styles.reported}>reported</p>
       ) : isSaving ? (
@@ -280,7 +284,7 @@ const Page = ({ sentence }) => {
                 disabled={likeLoading}
                 className={`link ${styles.like}`}
               >
-                {sentence.liked ? 'unfavourite' : 'favourite'}
+                {story.liked ? 'unfavourite' : 'favourite'}
               </button>
             </>
           ) : null}
@@ -303,7 +307,7 @@ const Page = ({ sentence }) => {
                 delete
               </button>
             </>
-          ) : sentence.author ? (
+          ) : ending.author ? (
             <button
               type="button"
               onClick={onClickReport}
@@ -320,10 +324,8 @@ const Page = ({ sentence }) => {
   )
 }
 
-const renderAuthors = (sentence) => {
-  const authors = [...sentence.parents, sentence]
-    .map((s) => s.author)
-    .filter(Boolean)
+const renderAuthors = ({ beginning, ending }) => {
+  const authors = [...beginning, ending].map((s) => s.author).filter(Boolean)
   const authorCounts = {}
   const authorIndices = {}
   for (let i = 0; i < authors.length; i++) {
@@ -373,7 +375,24 @@ const removeSentence = (id, sentenceList, { readField }) => {
 }
 
 Page.propTypes = {
-  sentence: Sentence.propTypes.sentence,
+  story: PropTypes.shape({
+    id: PropTypes.string,
+    title: PropTypes.string,
+    beginning: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+      })
+    ),
+    ending: PropTypes.shape({
+      id: PropTypes.string,
+      content: PropTypes.string,
+      author: PropTypes.shape({
+        id: PropTypes.string,
+        name: PropTypes.string,
+      }),
+    }),
+    liked: PropTypes.bool,
+  }),
 }
 
 export default Page

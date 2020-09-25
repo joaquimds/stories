@@ -13,14 +13,16 @@ export const typeDefs = gql`
   type Sentence {
     id: String
     content: String!
-    intro: String!
-    parents: [Sentence]!
-    childCount: Int!
-    children(order: Order, exclude: [String]): [Sentence]!
     author: User
+  }
+  type Story {
+    id: String!
+    intro: String!
+    beginning: [Story]!
+    ending: Sentence!
+    childCount: Int!
+    children(order: Order, exclude: [String]): [Story]!
     title: String
-    slug: String
-    permalink: String
     liked: Boolean!
   }
   type SentenceList {
@@ -28,7 +30,7 @@ export const typeDefs = gql`
     sentences: [Sentence]
   }
   type Query {
-    sentence(slug: String): Sentence
+    story(permalink: String): Story
     stories(search: String, order: Order, exclude: [String]): SentenceList!
     mySentences(search: String, offset: Int): SentenceList!
     likedSentences(search: String, offset: Int): SentenceList!

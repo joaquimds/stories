@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client/core'
 import AccountSentenceList from '../AccountSentenceList/AccountSentenceList'
-import Sentence from '../Sentence/Sentence'
+import StoryLink from '../StoryLink/StoryLink'
 
 const Fragments = () => {
   return (
@@ -20,7 +20,7 @@ Fragments.query = gql`
       }
     }
   }
-  ${Sentence.fragments.sentence}
+  ${StoryLink.fragments.sentence}
 `
 
 export default Fragments
