@@ -7,7 +7,7 @@ import PropTypes from 'prop-types'
 import { useContext, useState } from 'react'
 import { ERRORS } from '../../constants'
 import UserContext from '../../context/UserContext'
-import StoryLink from '../StoryLink/StoryLink'
+import * as fragments from '../../graphql/fragments'
 import styles from './Page.module.scss'
 
 const LIKE_SENTENCE_MUTATION = gql`
@@ -36,7 +36,7 @@ const DELETE_SENTENCE_MUTATION = gql`
       }
     }
   }
-  ${StoryLink.fragments.sentence}
+  ${fragments.sentence}
 `
 
 const Page = ({ story }) => {
@@ -49,7 +49,7 @@ const Page = ({ story }) => {
   const [error, setError] = useState(null)
   const [title, setTitle] = useState('')
 
-  const { beginning, ending } = story
+  const { parents, ending } = story
 
   const [deleteSentence, { loading }] = useMutation(DELETE_SENTENCE_MUTATION, {
     variables: { id: story.ending.id },
@@ -110,38 +110,17 @@ const Page = ({ story }) => {
           return setErrorFromCode(errorCode)
         }
         if (updated) {
-          return cache.writeFragment({
+          cache.writeFragment({
             id: cache.identify(updated),
-            fragment: StoryLink.fragments.sentence,
+            fragment: fragments.sentence,
             data: updated,
           })
+          if (updated.content) {
+            return
+          }
         }
-        const parent = beginning[beginning.length - 1]
-        cache.modify({
-          id: `Sentence:${parent.id}`,
-          fields: {
-            childCount(count) {
-              return count > 0 ? count - 1 : count
-            },
-            children(childRefs, { readField }) {
-              return childRefs.filter(
-                (childRef) => readField('id', childRef) !== ending.id
-              )
-            },
-          },
-        })
-        cache.modify({
-          id: 'ROOT_QUERY',
-          fields: {
-            mySentences(sentenceList, options) {
-              return removeSentence(ending.id, sentenceList, options)
-            },
-            likedSentences(sentenceList, options) {
-              return removeSentence(ending.id, sentenceList, options)
-            },
-          },
-        })
-        if (parent.id === '/0') {
+        const parent = parents[parents.length - 1]
+        if (parent.id === '0') {
           return router.push('/')
         }
         return router.push('/[slug]', `/${parent.id}`)
@@ -203,15 +182,20 @@ const Page = ({ story }) => {
     }
   }
 
-  const parents = beginning.map(({ ending }) => ending)
-  const firstSentence = parents.filter(({ content, author }) => {
+  const sentences = parents.map(({ ending }) => ending)
+  sentences.push(ending)
+
+  const firstSentence = sentences.filter(({ content, author }) => {
     return content && author
   })[0]
   const metaTitle = story.title
     ? `${story.title} | ${process.env.title}`
     : process.env.title
-  const description = firstSentence ? firstSentence.content : ending.content
-  const linkableParents = parents.filter((p) => p.content)
+  const description =
+    firstSentence && firstSentence.content
+      ? firstSentence.content
+      : process.env.description
+  const linkableParents = parents.filter((p) => p.ending.content)
 
   return (
     <>
@@ -236,15 +220,17 @@ const Page = ({ story }) => {
         />
       </Head>
       {story.title ? <h1>{story.title}</h1> : null}
-      {linkableParents.map((p, i) => (
-        <p key={i} className={styles.content}>
+      {linkableParents.map((p) => (
+        <p key={p.id} className={styles.content}>
           <Link href="/[slug]" as={`/${p.id}`}>
-            <a>{p.content}</a>
+            <a>{p.ending.content}</a>
           </Link>{' '}
         </p>
       ))}
-      <p className={styles.content}>{ending.content}</p>
-      {renderAuthors(story)}
+      {ending.content ? (
+        <p className={styles.content}>{ending.content}</p>
+      ) : null}
+      {renderAuthors(sentences)}
       {isReported ? (
         <p className={styles.reported}>reported</p>
       ) : isSaving ? (
@@ -324,8 +310,8 @@ const Page = ({ story }) => {
   )
 }
 
-const renderAuthors = ({ beginning, ending }) => {
-  const authors = [...beginning, ending].map((s) => s.author).filter(Boolean)
+const renderAuthors = (sentences) => {
+  const authors = sentences.map((s) => s.author).filter(Boolean)
   const authorCounts = {}
   const authorIndices = {}
   for (let i = 0; i < authors.length; i++) {
@@ -362,23 +348,11 @@ const renderAuthors = ({ beginning, ending }) => {
   )
 }
 
-const removeSentence = (id, sentenceList, { readField }) => {
-  if (!sentenceList) {
-    return null
-  }
-  return {
-    count: sentenceList.count > 0 ? sentenceList.count - 1 : 0,
-    sentences: sentenceList.sentences.filter(
-      (sentenceRef) => readField('id', sentenceRef) !== id
-    ),
-  }
-}
-
 Page.propTypes = {
   story: PropTypes.shape({
     id: PropTypes.string,
     title: PropTypes.string,
-    beginning: PropTypes.arrayOf(
+    parents: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,
       })

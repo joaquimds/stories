@@ -131,7 +131,7 @@ const createApolloClient = (initialState = {}, context = {}) => {
           },
         },
       },
-      Sentence: {
+      Story: {
         fields: {
           children: {
             keyArgs: ['order'],

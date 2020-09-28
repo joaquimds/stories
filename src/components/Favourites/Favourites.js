@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client/core'
+import * as fragments from '../../graphql/fragments'
 import AccountSentenceList from '../AccountSentenceList/AccountSentenceList'
-import StoryLink from '../StoryLink/StoryLink'
 
 const Favourites = () => {
   return (
@@ -20,7 +20,7 @@ Favourites.query = gql`
       }
     }
   }
-  ${StoryLink.fragments.sentence}
+  ${fragments.sentence}
 `
 
 export default Favourites

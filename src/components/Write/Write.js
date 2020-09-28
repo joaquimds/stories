@@ -6,19 +6,19 @@ import * as PropTypes from 'prop-types'
 import { useContext, useState } from 'react'
 import { ERRORS } from '../../constants'
 import UserContext from '../../context/UserContext'
-import StoryLink from '../StoryLink/StoryLink'
+import * as fragments from '../../graphql/fragments'
 import styles from './Write.module.scss'
 
 const ADD_SENTENCE_MUTATION = gql`
-  mutation AddSentenceMutation($content: String!, $parentId: String) {
+  mutation AddSentenceMutation($content: String!, $parentId: String!) {
     addSentenceMutation(content: $content, parentId: $parentId) {
       errorCode
-      sentence {
-        ...SentenceFragment
+      story {
+        ...StoryFragment
       }
     }
   }
-  ${StoryLink.fragments.sentence}
+  ${fragments.story}
 `
 
 const Write = ({ parentId }) => {
@@ -43,7 +43,7 @@ const Write = ({ parentId }) => {
         cache,
         {
           data: {
-            addSentenceMutation: { errorCode, sentence: newSentence },
+            addSentenceMutation: { errorCode, story: newStory },
           },
         }
       ) {
@@ -51,8 +51,8 @@ const Write = ({ parentId }) => {
           return setErrorFromCode(errorCode)
         }
         setContent('')
-        await router.push('/[slug]', `/${newSentence.id}`)
-        updateCache(cache, parentId, newSentence)
+        await router.push('/[slug]', `/${newStory.id}`)
+        updateCache(cache, parentId, newStory)
       },
     })
   }
@@ -82,19 +82,20 @@ const Write = ({ parentId }) => {
   )
 }
 
-const updateCache = (cache, parentId, newSentence) => {
-  const newSentenceRef = cache.writeFragment({
-    data: newSentence,
-    fragment: StoryLink.fragments.sentence,
+const updateCache = (cache, parentId, newStory) => {
+  const newStoryRef = cache.writeFragment({
+    data: newStory,
+    fragment: fragments.story,
+    fragmentName: 'StoryFragment',
   })
   cache.modify({
-    id: `Sentence:${parentId}`,
+    id: `Story:${parentId}`,
     fields: {
       childCount(count) {
         return count && count > 0 ? count + 1 : 1
       },
       children(childRefs) {
-        return [...childRefs, newSentenceRef]
+        return [...childRefs, newStoryRef]
       },
     },
   })

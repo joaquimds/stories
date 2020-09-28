@@ -37,18 +37,17 @@ const AccountSentenceList = ({ query }) => {
         hasResults ? (
           <>
             <ul className={styles.list}>
-              {result.sentences.map((sentence) => (
-                <li key={sentence.id} className={styles.sentence}>
-                  <p>
-                    <Link
-                      href="/[slug]"
-                      as={`/${sentence.slug || sentence.id}`}
-                    >
-                      <a>{sentence.content}</a>
-                    </Link>
-                  </p>
-                </li>
-              ))}
+              {result.sentences
+                .filter((s) => s.content)
+                .map((sentence) => (
+                  <li key={sentence.id} className={styles.sentence}>
+                    <p>
+                      <Link href="/[slug]" as={`/${sentence.id}`}>
+                        <a>{sentence.content}</a>
+                      </Link>
+                    </p>
+                  </li>
+                ))}
               {result.sentences.length < result.count ? (
                 <li className={styles['load-more']}>
                   <button

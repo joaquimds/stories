@@ -1,38 +1,32 @@
-import qs from 'querystring'
 import { Like } from '../models/Like'
 import { Sentence } from '../models/Sentence'
+import { SentenceLink } from '../models/SentenceLink'
+import { Title } from '../models/Title'
 import { User } from '../models/User'
 import { logger } from '../services/logger'
 import { slugify } from '../util/text'
-import * as threads from '../util/threads'
+import { addThreadStep, parseThread, printThread } from '../util/threads'
 
 const LIMIT = 3
 
 export const resolvers = {
   Query: {
-    story: async (parent, { permalink }) => {
-      if (!permalink) {
-        permalink = '/0'
+    story: async (parent, { slug }) => {
+      if (!slug) {
+        slug = '0'
       }
 
-      const [path, query] = permalink.split('?')
-      const slug = path.substring(1)
-      const params = qs.decode(query || '')
-      const thread = threads.parseThread(params.thread || '')
+      const title = await Title.query().findOne({ slug })
+      const id = title ? title.storyId : slug
 
-      let sentence = await Sentence.query().findOne({ slug })
-      if (!sentence) {
-        const isInteger = /^[0-9]+$/.test(slug)
-        if (isInteger) {
-          sentence = await Sentence.query().findById(slug)
-        }
-      }
+      const thread = parseThread(id)
 
-      if (!sentence) {
+      const ending = await Sentence.query().findOne({ id: thread.end })
+      if (!ending) {
         return null
       }
 
-      return { id: permalink, ending: sentence, thread }
+      return { id: printThread(thread), ending, thread, title: title?.title }
     },
     stories: async (parent, { search, order, exclude = [] }) => {
       const query = Sentence.query().whereNotNull('title')
@@ -86,22 +80,25 @@ export const resolvers = {
         return ''
       }
       const parents = await ending.getParents(thread)
-      const firstParent = parents.filter(({ content, authorId }) => {
-        return content && authorId
-      })[0]
-      return firstParent ? firstParent.content : ending.content
+      const firstParent = parents.filter(
+        ({ ending: { content, authorId } }) => {
+          return content && authorId
+        }
+      )[0]
+      return firstParent ? firstParent.ending.content : ending.content
     },
-    beginning: async ({ ending, thread }) => {
+    title: async ({ id, title }) => {
+      if (title) {
+        return title
+      }
+      const titleEntity = await Title.query().findOne({ storyId: id })
+      return titleEntity?.title
+    },
+    parents: async ({ ending, thread }) => {
       if (ending.id === '0') {
         return []
       }
-      const parents = await ending.getParents(thread)
-      return parents.map((ending) => {
-        return {
-          id: `/${ending.id}`,
-          ending,
-        }
-      })
+      return ending.getParents(thread)
     },
     childCount: ({ ending }) => {
       return ending.countChildren()
@@ -110,20 +107,19 @@ export const resolvers = {
       const children = await ending.getChildren(order, exclude, LIMIT)
       return children.map((c) => {
         if (c.defaultParent !== ending.id) {
-          thread = threads.addThreadStep(thread, c.id, ending.id)
+          thread = addThreadStep(thread, c.id, ending.id)
         }
-        const id = thread.length
-          ? `/${c.id}?thread=${threads.printThread(thread)}`
-          : `/${c.id}`
-        return { id, ending: c }
+        thread.end = c.id
+        const id = printThread(thread)
+        return { id, thread, ending: c }
       })
     },
-    liked: async ({ ending: { id } }, args, { user }) => {
+    liked: async ({ id }, args, { user }) => {
       if (!user || !id) {
         return false
       }
       const like = await Like.query().findOne({
-        sentenceId: id,
+        storyId: id,
         userId: user.id,
       })
       return Boolean(like)
@@ -145,15 +141,20 @@ export const resolvers = {
       try {
         const content = args.content.trim().substring(0, 240)
         const parentId = args.parentId
-        if (!user || !content) {
+        if (!user || !content || !parentId) {
           return { errorCode: 400 }
         }
-        const sentence = await Sentence.query().insert({
+        const thread = parseThread(parentId)
+        const ending = await Sentence.query().insert({
           content,
-          parentId,
           authorId: user.id,
         })
-        return { sentence }
+        await SentenceLink.query().insert({
+          from: thread.end,
+          to: ending.id,
+        })
+        thread.end = ending.id
+        return { story: { id: printThread(thread), thread, ending } }
       } catch (e) {
         logger.error('%s %o %o', 'addSentenceMutation', args, e.message)
         return { errorCode: 500 }
@@ -161,8 +162,8 @@ export const resolvers = {
     },
     saveSentenceMutation: async (parent, args, { user }) => {
       const { id, title } = args
-      const isInteger = /^[0-9]+$/.test(title)
-      if (isInteger) {
+      const isThread = /^[0-9,:]+$/.test(title)
+      if (isThread) {
         return { errorCode: 400 }
       }
       if (!user) {
@@ -170,7 +171,8 @@ export const resolvers = {
       }
       const authorId = user.id
       try {
-        const sentence = await Sentence.query().findById(id)
+        const thread = parseThread(id)
+        const sentence = await Sentence.query().findById(thread.end)
         if (!sentence) {
           return { errorCode: 404 }
         }
@@ -178,13 +180,14 @@ export const resolvers = {
           return { errorCode: 403 }
         }
         const slug = slugify(title)
-        const existing = await Sentence.query().findOne({ slug })
+        const existing = await Title.query().findOne({ slug })
         if (existing) {
           return { errorCode: 409 }
         }
-        await Sentence.query().patchAndFetchById(id, {
-          slug,
+        await Title.query().insert({
+          storyId: id,
           title,
+          slug,
         })
         return { slug }
       } catch (e) {
@@ -214,8 +217,9 @@ export const resolvers = {
           })
           return { sentence: updated }
         }
+        await SentenceLink.query().delete().where({ to: id })
         await Sentence.query().deleteById(id)
-        return {}
+        return { sentence: { ...sentence, content: '' } }
       } catch (e) {
         logger.error('%s %o %o', 'deleteSentenceMutation', args, e.message)
         return { errorCode: 500 }

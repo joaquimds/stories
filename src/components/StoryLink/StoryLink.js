@@ -1,4 +1,3 @@
-import gql from 'graphql-tag'
 import Link from 'next/link'
 import PropTypes from 'prop-types'
 import styles from './StoryLink.module.scss'
@@ -22,18 +21,6 @@ StoryLink.propTypes = {
       content: PropTypes.string,
     }),
   }),
-}
-StoryLink.fragments = {
-  sentence: gql`
-    fragment SentenceFragment on Sentence {
-      id
-      content
-      author {
-        id
-        name
-      }
-    }
-  `,
 }
 
 export default StoryLink

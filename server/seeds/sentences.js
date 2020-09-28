@@ -11,6 +11,9 @@ exports.seed = async (knex) => {
     // id: 1,
     content: "The hills across the valley of the Ebro' were long and white.",
     authorId: 1,
+  })
+  await knex('titles').insert({
+    storyId: 1,
     title: 'Beginning',
     slug: slugify('Beginning'),
   })
@@ -33,6 +36,9 @@ exports.seed = async (knex) => {
     content:
       'Close against the side of the station there was the warm shadow of the building and a curtain, made of strings of bamboo beads hung across the open door into the bar, to keep out flies.',
     authorId: 1,
+  })
+  await knex('titles').insert({
+    storyId: 3,
     title: 'Following',
     slug: slugify('Following'),
   })
@@ -45,6 +51,9 @@ exports.seed = async (knex) => {
     content:
       'The American and the girl with him sat at a table in the shade, outside the building.',
     authorId: 1,
+  })
+  await knex('titles').insert({
+    storyId: 4,
     title: 'Alternate',
     slug: slugify('Alternate'),
   })
@@ -67,6 +76,9 @@ exports.seed = async (knex) => {
     content:
       'It stopped at this junction for two minutes and went on to Madrid.',
     authorId: 1,
+  })
+  await knex('titles').insert({
+    storyId: 6,
     title: 'Ending',
     slug: slugify('Ending'),
   })

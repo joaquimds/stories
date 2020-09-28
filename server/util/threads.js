@@ -1,6 +1,6 @@
 export const parseThread = (thread) => {
-  return (thread || '')
-    .split(',')
+  const [end, ...rest] = (thread || '').split(',')
+  const backtrace = rest
     .map((part) => part.split(':'))
     .filter((step) => step.length === 3)
     .map(([from, count, to]) => {
@@ -10,19 +10,23 @@ export const parseThread = (thread) => {
         count: Number(count),
       }
     })
+  return { end, backtrace }
 }
 
-export const addThreadStep = (thread = [], from, to) => {
-  const newThread = thread.map((p) => {
+export const addThreadStep = (thread, from, to) => {
+  const newTrace = thread.backtrace.map((p) => {
     if (p.from === from) {
       return { ...p, count: p.count + 1 }
     }
     return p
   })
-  newThread.push({ from, to, count: 1 })
-  return newThread
+  newTrace.unshift({ from, to, count: 1 })
+  return { ...thread, backtrace: newTrace }
 }
 
-export const printThread = (thread = []) => {
-  return thread.map(({ from, count, to }) => `${from}:${count}:${to}`).join(',')
+export const printThread = (thread) => {
+  const trace = thread.backtrace
+    .map(({ from, count, to }) => `${from}:${count}:${to}`)
+    .join(',')
+  return [thread.end, trace].filter(Boolean).join(',')
 }

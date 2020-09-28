@@ -1,4 +1,5 @@
 import { Model, ref } from 'objection'
+import { printThread } from '../util/threads'
 import { Like } from './Like'
 import { SentenceLink } from './SentenceLink'
 
@@ -20,13 +21,17 @@ export class Sentence extends Model {
       relation: Model.ManyToManyRelation,
       modelClass: Sentence,
       join: {
-        from: 'sentenceLinks.from',
-        to: 'sentenceLinks.to',
+        from: 'sentences.id',
+        through: {
+          from: 'sentenceLinks.from',
+          to: 'sentenceLinks.to',
+        },
+        to: 'sentences.id',
       },
     },
   }
 
-  async getParents(thread = []) {
+  async getParents(thread) {
     const allParents = await Sentence.query()
       .select('*')
       .from('parents')
@@ -47,20 +52,27 @@ export class Sentence extends Model {
     let childId = this.id
     const parents = []
     const counts = {}
+    const backtrace = [...thread.backtrace]
     while (childId) {
       counts[childId] = counts[childId] ? counts[childId] + 1 : 1
-      const currentThreadStep = thread.find(
-        ({ from, count }) => childId === from && count === counts[childId]
-      )
+      const backlink = backtrace[0]
       let parent
-      if (currentThreadStep) {
-        parent = allParents.find(({ id }) => id === currentThreadStep.to)
+      if (backlink) {
+        const { from, count, to } = backlink
+        if (from === childId && count === counts[childId]) {
+          parent = allParents.find(({ id }) => id === to)
+          backtrace.shift()
+        }
       }
       if (!parent) {
         parent = allParents.find(({ to }) => to === childId)
       }
       if (parent) {
-        parents.push(parent)
+        const thread = {
+          end: parent.id,
+          backtrace: [...backtrace],
+        }
+        parents.push({ ending: parent, thread, id: printThread(thread) })
       }
       childId = parent?.id
     }
@@ -87,7 +99,7 @@ export class Sentence extends Model {
       .whereNotIn('sentences.id', exclude)
       .andWhere('sentenceLinks.from', '=', this.id)
     Sentence.addOrder(query, order)
-    return query.limit(limit).debug()
+    return query.limit(limit)
   }
 
   static addOrder(query, order = 'oldest') {
@@ -102,7 +114,7 @@ export class Sentence extends Model {
       case 'likes':
       default:
         subquery = Like.query()
-          .where({ sentenceId: ref('sentences.id') })
+          .whereRaw("split_part(story_id, ',', 1) = sentences.id::varchar")
           .count()
           .as('likes')
         query.orderBy('likes', 'desc')

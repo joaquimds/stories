@@ -1,21 +1,15 @@
 import Error from 'next/error'
-import PropTypes from 'prop-types'
+import { useRouter } from 'next/router'
 import StoryTree from '../components/StoryTree/StoryTree'
 import withData from '../containers/withData'
 
-const SentencePage = ({ permalink }) => {
-  if (!permalink) {
+const SentencePage = () => {
+  const router = useRouter()
+  const { slug } = router.query
+  if (!slug) {
     return <Error statusCode={404} />
   }
-  return <StoryTree permalink={permalink} />
-}
-
-SentencePage.propTypes = {
-  permalink: PropTypes.string,
-}
-
-SentencePage.getInitialProps = ({ asPath }) => {
-  return { permalink: asPath }
+  return <StoryTree slug={slug} />
 }
 
 export default withData(SentencePage, { ssr: true })

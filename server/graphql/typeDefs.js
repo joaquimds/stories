@@ -11,27 +11,31 @@ export const typeDefs = gql`
     name: String!
   }
   type Sentence {
-    id: String
+    id: String!
     content: String!
     author: User
   }
   type Story {
     id: String!
     intro: String!
-    beginning: [Story]!
+    parents: [Story]!
     ending: Sentence!
     childCount: Int!
     children(order: Order, exclude: [String]): [Story]!
     title: String
     liked: Boolean!
   }
+  type StoryList {
+    count: Int!
+    stories: [Story]!
+  }
   type SentenceList {
     count: Int!
-    sentences: [Sentence]
+    sentences: [Sentence]!
   }
   type Query {
-    story(permalink: String): Story
-    stories(search: String, order: Order, exclude: [String]): SentenceList!
+    story(slug: String!): Story
+    stories(search: String, offset: Int): StoryList!
     mySentences(search: String, offset: Int): SentenceList!
     likedSentences(search: String, offset: Int): SentenceList!
   }
@@ -42,12 +46,16 @@ export const typeDefs = gql`
     errorCode: Int
     slug: String
   }
+  type StoryResponse {
+    errorCode: Int
+    story: Story
+  }
   type SentenceResponse {
     errorCode: Int
     sentence: Sentence
   }
   type Mutation {
-    addSentenceMutation(content: String!, parentId: String): SentenceResponse
+    addSentenceMutation(content: String!, parentId: String!): StoryResponse
     saveSentenceMutation(id: String!, title: String!): SaveResponse
     deleteSentenceMutation(id: String!): SentenceResponse
     likeSentenceMutation(id: String!, like: Boolean!): Response

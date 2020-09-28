@@ -1,9 +1,10 @@
 import { useQuery } from '@apollo/react-hooks'
 import gql from 'graphql-tag'
 import Link from 'next/link'
-import * as PropTypes from 'prop-types'
+import PropTypes from 'prop-types'
 import { useEffect, useState } from 'react'
 import { ORDERS } from '../../constants'
+import * as fragments from '../../graphql/fragments'
 import NProgress from '../../services/nprogress'
 import Page from '../Page/Page'
 import StoryLink from '../StoryLink/StoryLink'
@@ -12,12 +13,11 @@ import styles from './StoryTree.module.scss'
 
 const nprogress = new NProgress()
 
-const StoryTree = ({ permalink }) => {
-  console.log('rendering', permalink)
+const StoryTree = ({ slug }) => {
   const [order, setOrder] = useState('likes')
   const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
-      permalink,
+      slug,
       order,
     },
   })
@@ -46,11 +46,10 @@ const StoryTree = ({ permalink }) => {
     )
   }
 
-  console.log('b', story.beginning)
   const onClickLoadMore = () => {
     fetchMore({
       variables: {
-        exclude: children ? children.map((c) => c.id) : [],
+        exclude: children ? children.map((c) => c.ending.id) : [],
       },
     })
   }
@@ -59,7 +58,7 @@ const StoryTree = ({ permalink }) => {
     <div className={styles.container}>
       <div className={`${styles.half} ${styles.top}`}>
         <div className={styles.content}>
-          {permalink ? (
+          {slug !== '0' ? (
             <Page story={story} />
           ) : (
             <p className={styles.begin}>
@@ -120,10 +119,15 @@ const StoryTree = ({ permalink }) => {
 }
 
 const extractStory = (data) => {
-  const story = data && data.story ? data.story : null
-  const children = story && story.children
-  const childCount = story && story.childCount
-  return { story, children, childCount }
+  const story = data?.story
+  const children = story ? story.children : []
+  const deletedCount = children.filter((c) => !c.ending.content).length
+  const childCount = story ? story.childCount - deletedCount : 0
+  return {
+    story,
+    children: children.filter((c) => c.ending.content),
+    childCount,
+  }
 }
 
 const buttonClass = (order, current) => {
@@ -131,28 +135,16 @@ const buttonClass = (order, current) => {
 }
 
 StoryTree.propTypes = {
-  permalink: PropTypes.string,
-}
-
-StoryTree.fragments = {
-  story: gql`
-    fragment StoryFragment on Story {
-      id
-      ending {
-        ...SentenceFragment
-      }
-    }
-    ${StoryLink.fragments.sentence}
-  `,
+  slug: PropTypes.string,
 }
 
 StoryTree.query = gql`
-  query Story($permalink: String, $order: Order, $exclude: [String]) {
-    story(permalink: $permalink) {
+  query Story($slug: String!, $order: Order, $exclude: [String]) {
+    story(slug: $slug) {
       id
       title
       liked
-      beginning {
+      parents {
         ...StoryFragment
       }
       ending {
@@ -164,7 +156,7 @@ StoryTree.query = gql`
       }
     }
   }
-  ${StoryTree.fragments.story}
+  ${fragments.story}
 `
 
 export default StoryTree
