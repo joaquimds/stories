@@ -6,7 +6,7 @@ const StoryLink = ({ story }) => {
   return (
     <div className={styles.card}>
       <p>
-        <Link href="/[slug]" as={story.id}>
+        <Link href="/[slug]" as={story.permalink}>
           <a className={styles.link}>{story.ending.content}</a>
         </Link>
       </p>
@@ -17,6 +17,7 @@ const StoryLink = ({ story }) => {
 StoryLink.propTypes = {
   story: PropTypes.shape({
     id: PropTypes.string,
+    permalink: PropTypes.string,
     ending: PropTypes.shape({
       content: PropTypes.string,
     }),

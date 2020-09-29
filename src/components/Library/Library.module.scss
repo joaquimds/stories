@@ -32,8 +32,8 @@
   padding: spacing(2);
 
   @include desktop {
-    max-width: calc((600px - #{spacing(2)}) / 2 - 2 * #{spacing(1)});
-    min-width: calc((600px - #{spacing(2)}) / 3 - 2 * #{spacing(1)});
+    max-width: calc((720px - #{spacing(2)}) / 2 - 2 * #{spacing(1)});
+    min-width: calc((720px - #{spacing(2)}) / 3 - 2 * #{spacing(1)});
   }
 }
 

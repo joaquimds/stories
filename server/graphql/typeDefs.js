@@ -4,7 +4,7 @@ export const typeDefs = gql`
   enum Order {
     oldest
     newest
-    likes
+    score
   }
   type User {
     id: String!
@@ -23,21 +23,18 @@ export const typeDefs = gql`
     childCount: Int!
     children(order: Order, exclude: [String]): [Story]!
     title: String
+    permalink: String!
     liked: Boolean!
   }
   type StoryList {
     count: Int!
     stories: [Story]!
   }
-  type SentenceList {
-    count: Int!
-    sentences: [Sentence]!
-  }
   type Query {
     story(slug: String!): Story
-    stories(search: String, offset: Int): StoryList!
-    mySentences(search: String, offset: Int): SentenceList!
-    likedSentences(search: String, offset: Int): SentenceList!
+    stories(search: String, order: Order, offset: Int): StoryList!
+    myStories(search: String, offset: Int): StoryList!
+    likedStories(search: String, offset: Int): StoryList!
   }
   type Response {
     errorCode: Int
@@ -56,8 +53,8 @@ export const typeDefs = gql`
   }
   type Mutation {
     addSentenceMutation(content: String!, parentId: String!): StoryResponse
-    saveSentenceMutation(id: String!, title: String!): SaveResponse
+    saveStoryMutation(id: String!, title: String!): SaveResponse
     deleteSentenceMutation(id: String!): SentenceResponse
-    likeSentenceMutation(id: String!, like: Boolean!): Response
+    likeStoryMutation(id: String!, like: Boolean!): Response
   }
 `

@@ -12,15 +12,15 @@ const Fragments = () => {
 }
 
 Fragments.query = gql`
-  query MySentences($search: String, $offset: Int) {
-    mySentences(search: $search, offset: $offset) {
+  query MyStories($search: String, $offset: Int) {
+    myStories(search: $search, offset: $offset) {
       count
-      sentences {
-        ...SentenceFragment
+      stories {
+        ...StoryFragment
       }
     }
   }
-  ${fragments.sentence}
+  ${fragments.story}
 `
 
 export default Fragments

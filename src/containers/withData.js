@@ -117,17 +117,17 @@ const createApolloClient = (initialState = {}, context = {}) => {
     typePolicies: {
       Query: {
         fields: {
-          mySentences: {
+          myStories: {
             keyArgs: ['search'],
-            merge: mergeSentences,
+            merge: mergeStories,
           },
-          likedSentences: {
+          likedStories: {
             keyArgs: ['search'],
-            merge: mergeSentences,
+            merge: mergeStories,
           },
           stories: {
             keyArgs: ['search', 'order'],
-            merge: mergeSentences,
+            merge: mergeStories,
           },
         },
       },
@@ -159,10 +159,10 @@ const createApolloClient = (initialState = {}, context = {}) => {
   })
 }
 
-const mergeSentences = (existing = {}, incoming = {}, options) => {
+const mergeStories = (existing = {}, incoming = {}, options) => {
   return {
     ...incoming,
-    sentences: mergeChildren(existing.sentences, incoming.sentences, options),
+    stories: mergeChildren(existing.stories, incoming.stories, options),
   }
 }
 

@@ -14,7 +14,7 @@ import styles from './StoryTree.module.scss'
 const nprogress = new NProgress()
 
 const StoryTree = ({ slug }) => {
-  const [order, setOrder] = useState('likes')
+  const [order, setOrder] = useState('score')
   const { data, loading, fetchMore } = useQuery(StoryTree.query, {
     variables: {
       slug,
@@ -121,11 +121,10 @@ const StoryTree = ({ slug }) => {
 const extractStory = (data) => {
   const story = data?.story
   const children = story ? story.children : []
-  const deletedCount = children.filter((c) => !c.ending.content).length
-  const childCount = story ? story.childCount - deletedCount : 0
+  const childCount = story ? story.childCount : 0
   return {
     story,
-    children: children.filter((c) => c.ending.content),
+    children,
     childCount,
   }
 }

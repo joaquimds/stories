@@ -14,6 +14,7 @@ export const sentence = gql`
 export const story = gql`
   fragment StoryFragment on Story {
     id
+    permalink
     ending {
       ...SentenceFragment
     }

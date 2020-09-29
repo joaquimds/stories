@@ -11,16 +11,16 @@ import * as fragments from '../../graphql/fragments'
 import styles from './Page.module.scss'
 
 const LIKE_SENTENCE_MUTATION = gql`
-  mutation LikeSentenceMutation($id: String!, $like: Boolean!) {
-    likeSentenceMutation(id: $id, like: $like) {
+  mutation LikeStoryMutation($id: String!, $like: Boolean!) {
+    likeStoryMutation(id: $id, like: $like) {
       errorCode
     }
   }
 `
 
 const SAVE_SENTENCE_MUTATION = gql`
-  mutation SaveSentenceMutation($id: String!, $title: String!) {
-    saveSentenceMutation(id: $id, title: $title) {
+  mutation SaveStoryMutation($id: String!, $title: String!) {
+    saveStoryMutation(id: $id, title: $title) {
       errorCode
       slug
     }
@@ -76,7 +76,7 @@ const Page = ({ story }) => {
         cache,
         {
           data: {
-            saveSentenceMutation: { errorCode, slug },
+            saveStoryMutation: { errorCode, slug },
           },
         }
       ) {
@@ -110,20 +110,18 @@ const Page = ({ story }) => {
           return setErrorFromCode(errorCode)
         }
         if (updated) {
-          cache.writeFragment({
+          return cache.writeFragment({
             id: cache.identify(updated),
             fragment: fragments.sentence,
             data: updated,
           })
-          if (updated.content) {
-            return
-          }
         }
         const parent = parents[parents.length - 1]
+        await cache.reset()
         if (parent.id === '0') {
           return router.push('/')
         }
-        return router.push('/[slug]', `/${parent.id}`)
+        return router.push('/[slug]', parent.permalink)
       },
     })
   }
@@ -138,7 +136,7 @@ const Page = ({ story }) => {
         cache,
         {
           data: {
-            likeSentenceMutation: { errorCode },
+            likeStoryMutation: { errorCode },
           },
         }
       ) {
@@ -156,7 +154,7 @@ const Page = ({ story }) => {
         cache.modify({
           id: 'ROOT_QUERY',
           fields: {
-            likedSentences(sentenceList, { DELETE }) {
+            likedStories(sentenceList, { DELETE }) {
               return DELETE
             },
           },
@@ -222,14 +220,12 @@ const Page = ({ story }) => {
       {story.title ? <h1>{story.title}</h1> : null}
       {linkableParents.map((p) => (
         <p key={p.id} className={styles.content}>
-          <Link href="/[slug]" as={`/${p.id}`}>
+          <Link href="/[slug]" as={p.permalink}>
             <a>{p.ending.content}</a>
           </Link>{' '}
         </p>
       ))}
-      {ending.content ? (
-        <p className={styles.content}>{ending.content}</p>
-      ) : null}
+      <p className={styles.content}>{ending.content}</p>
       {renderAuthors(sentences)}
       {isReported ? (
         <p className={styles.reported}>reported</p>
@@ -355,6 +351,7 @@ Page.propTypes = {
     parents: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,
+        permalink: PropTypes.string,
       })
     ),
     ending: PropTypes.shape({

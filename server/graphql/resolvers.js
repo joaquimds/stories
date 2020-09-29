@@ -1,4 +1,5 @@
 import { Like } from '../models/Like'
+import { Point } from '../models/Point'
 import { Sentence } from '../models/Sentence'
 import { SentenceLink } from '../models/SentenceLink'
 import { Title } from '../models/Title'
@@ -26,22 +27,40 @@ export const resolvers = {
         return null
       }
 
-      return { id: printThread(thread), ending, thread, title: title?.title }
+      return {
+        id: printThread(thread),
+        ending,
+        thread,
+        title: title?.title,
+        slug: title?.slug,
+      }
     },
-    stories: async (parent, { search, order, exclude = [] }) => {
-      const query = Sentence.query().whereNotNull('title')
+    stories: async (parent, { search, order, offset = 0 }) => {
+      const query = Sentence.query().join(
+        'titles',
+        'sentences.id',
+        'titles.sentenceId'
+      )
       if (search) {
         const escapedSearch = search.replace(/%/g, '\\%')
-        query.andWhere('title', 'ilike', `%${escapedSearch}%`)
+        query.where('title', 'ilike', `%${escapedSearch}%`)
       }
       const countResult = await query.clone().count().first()
       Sentence.addOrder(query, order)
       const sentences = await query
-        .andWhere((builder) => builder.whereNotIn('id', exclude))
+        .select('sentences.*', 'titles.storyId')
         .limit(LIMIT)
-      return { count: countResult.count, sentences }
+        .offset(offset)
+      const stories = sentences.map((sentence) => {
+        return {
+          id: sentence.storyId,
+          ending: sentence,
+          thread: parseThread(sentence.storyId),
+        }
+      })
+      return { count: countResult.count, stories }
     },
-    mySentences: async (parent, { search, offset = 0 }, { user }) => {
+    myStories: async (parent, { search, offset = 0 }, { user }) => {
       if (!user) {
         return []
       }
@@ -52,25 +71,43 @@ export const resolvers = {
       }
       const countResult = await query.clone().count().first()
       const sentences = await query.offset(offset).limit(LIMIT)
-      return { count: countResult.count, sentences }
+      const stories = sentences.map((sentence) => {
+        const thread = sentence.getThread()
+        return {
+          id: printThread(thread),
+          ending: sentence,
+          thread,
+        }
+      })
+      return { count: countResult.count, stories }
     },
-    likedSentences: async (parent, { search, offset = 0 }, { user }) => {
+    likedStories: async (parent, { search, offset = 0 }, { user }) => {
       if (!user) {
         return []
       }
-      const subquery = Like.query().where({ userId: user.id })
-      const query = Like.relatedQuery('sentence')
-        .for(subquery)
+      const query = Sentence.query()
+        .join('likes', 'sentences.id', 'likes.sentenceId')
         .whereNotNull('content')
       if (search) {
         const escapedSearch = search.replace(/%/g, '\\%')
         query.andWhere('content', 'ilike', `%${escapedSearch}%`)
       }
       const countResult = await query.clone().count().first()
-      const sentences = await query.offset(offset).limit(LIMIT)
+      const sentences = await query
+        .select('sentences.*', 'likes.storyId')
+        .orderBy('likes.id', 'desc')
+        .offset(offset)
+        .limit(LIMIT)
+      const stories = sentences.map((sentence) => {
+        return {
+          id: sentence.storyId,
+          ending: sentence,
+          thread: parseThread(sentence.storyId),
+        }
+      })
       return {
         count: countResult.count,
-        sentences,
+        stories,
       }
     },
   },
@@ -93,6 +130,13 @@ export const resolvers = {
       }
       const titleEntity = await Title.query().findOne({ storyId: id })
       return titleEntity?.title
+    },
+    permalink: async ({ id, slug }) => {
+      if (slug) {
+        return `/${slug}`
+      }
+      const titleEntity = await Title.query().findOne({ storyId: id })
+      return titleEntity ? `/${titleEntity.slug}` : `/${id}`
     },
     parents: async ({ ending, thread }) => {
       if (ending.id === '0') {
@@ -144,23 +188,28 @@ export const resolvers = {
         if (!user || !content || !parentId) {
           return { errorCode: 400 }
         }
-        const thread = parseThread(parentId)
+        const parentThread = parseThread(parentId)
         const ending = await Sentence.query().insert({
           content,
+          storyParentId: parentId,
           authorId: user.id,
         })
         await SentenceLink.query().insert({
-          from: thread.end,
+          from: parentThread.end,
           to: ending.id,
         })
-        thread.end = ending.id
+        const thread = ending.getThread()
+        await ending.createPoints(thread, {
+          userId: user.id,
+          parentId: ending.id,
+        })
         return { story: { id: printThread(thread), thread, ending } }
       } catch (e) {
         logger.error('%s %o %o', 'addSentenceMutation', args, e.message)
         return { errorCode: 500 }
       }
     },
-    saveSentenceMutation: async (parent, args, { user }) => {
+    saveStoryMutation: async (parent, args, { user }) => {
       const { id, title } = args
       const isThread = /^[0-9,:]+$/.test(title)
       if (isThread) {
@@ -186,12 +235,13 @@ export const resolvers = {
         }
         await Title.query().insert({
           storyId: id,
+          sentenceId: sentence.id,
           title,
           slug,
         })
         return { slug }
       } catch (e) {
-        logger.error('%s %o %o', 'saveSentenceMutation', args, e.message)
+        logger.error('%s %o %o', 'saveStoryMutation', args, e.message)
         return { errorCode: 500 }
       }
     },
@@ -211,6 +261,11 @@ export const resolvers = {
         if (sentence.authorId !== authorId) {
           return { errorCode: 403 }
         }
+        await Point.query().delete().where({ parentId: sentence.id })
+        const likes = await Like.query().where({ sentenceId: sentence.id })
+        const likeIds = likes.map((l) => l.id)
+        await Point.query().delete().whereIn('likeId', likeIds)
+        await Like.query().delete().whereIn('id', likeIds)
         if (sentence.children.length) {
           const updated = await Sentence.query().patchAndFetchById(id, {
             authorId: null,
@@ -219,35 +274,47 @@ export const resolvers = {
         }
         await SentenceLink.query().delete().where({ to: id })
         await Sentence.query().deleteById(id)
-        return { sentence: { ...sentence, content: '' } }
+        return {}
       } catch (e) {
         logger.error('%s %o %o', 'deleteSentenceMutation', args, e.message)
         return { errorCode: 500 }
       }
     },
-    likeSentenceMutation: async (parent, args, { user }) => {
-      const { id, like } = args
+    likeStoryMutation: async (parent, args, { user }) => {
+      const { id, like: isLike } = args
       if (!user) {
         return { errorCode: 403 }
       }
+      const thread = parseThread(id)
       try {
-        const sentence = await Sentence.query().findById(id)
+        const sentence = await Sentence.query().findById(thread.end)
         if (!sentence) {
           return { errorCode: 404 }
         }
-        const queryArgs = { sentenceId: id, userId: user.id }
-        if (like) {
-          const existing = await Like.query().findOne(queryArgs)
-          if (existing) {
-            return {}
+        const queryArgs = { storyId: id, userId: user.id }
+        if (!isLike) {
+          const like = await Like.query().findOne(queryArgs)
+          if (like) {
+            await Point.query().delete().where({ likeId: like.id })
           }
-          await Like.query().insert(queryArgs)
+          await Like.query().where(queryArgs).delete()
           return {}
         }
-        await Like.query().delete().where(queryArgs)
+        const existing = await Like.query().findOne(queryArgs)
+        if (existing) {
+          return {}
+        }
+        const like = await Like.query().insert({
+          ...queryArgs,
+          sentenceId: sentence.id,
+        })
+        await sentence.createPoints(thread, {
+          likeId: like.id,
+          userId: user.id,
+        })
         return {}
       } catch (e) {
-        logger.error('%s %o %o', 'likeSentenceMutation', args, e.message)
+        logger.error('%s %o %o', 'likeStoryMutation', args, e.message)
         return { errorCode: 500 }
       }
     },

@@ -102,7 +102,7 @@ const updateCache = (cache, parentId, newStory) => {
   cache.modify({
     id: 'ROOT_QUERY',
     fields: {
-      mySentences({ DELETE }) {
+      myStories({ DELETE }) {
         return DELETE
       },
     },

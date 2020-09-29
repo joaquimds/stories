@@ -2,6 +2,7 @@ exports.up = (knex) => {
   return knex.schema
     .createTable('sentences', (table) => {
       table.bigIncrements()
+      table.text('storyParentId').notNullable()
       table.text('content').notNullable()
       table.bigInteger('authorId')
       table.dateTime('date').defaultTo(knex.fn.now())

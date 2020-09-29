@@ -1,9 +1,10 @@
 exports.up = (knex) => {
   return knex.schema.createTable('titles', (table) => {
     table.bigIncrements()
-    table.text('storyId').unique()
+    table.text('storyId').unique().notNullable()
+    table.bigInteger('sentenceId').notNullable()
     table.text('title').notNullable()
-    table.text('slug').unique()
+    table.text('slug').unique().notNullable()
   })
 }
 

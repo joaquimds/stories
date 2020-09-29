@@ -15,15 +15,15 @@ const AccountSentenceList = ({ query }) => {
   const result = data ? data[Object.keys(data)[0]] : null
 
   const onClickLoadMore = () => {
-    const sentences = result ? result.sentences : []
+    const stories = result ? result.stories : []
     fetchMore({
       variables: {
-        offset: sentences.length,
+        offset: stories.length,
       },
     })
   }
 
-  const hasResults = result && result.sentences.length
+  const hasResults = result && result.stories.length
 
   return (
     <div className={styles['sentence-list']}>
@@ -37,18 +37,16 @@ const AccountSentenceList = ({ query }) => {
         hasResults ? (
           <>
             <ul className={styles.list}>
-              {result.sentences
-                .filter((s) => s.content)
-                .map((sentence) => (
-                  <li key={sentence.id} className={styles.sentence}>
-                    <p>
-                      <Link href="/[slug]" as={`/${sentence.id}`}>
-                        <a>{sentence.content}</a>
-                      </Link>
-                    </p>
-                  </li>
-                ))}
-              {result.sentences.length < result.count ? (
+              {result.stories.map((story) => (
+                <li key={story.id} className={styles.sentence}>
+                  <p>
+                    <Link href="/[slug]" as={story.permalink}>
+                      <a>{story.ending.content}</a>
+                    </Link>
+                  </p>
+                </li>
+              ))}
+              {result.stories.length < result.count ? (
                 <li className={styles['load-more']}>
                   <button
                     className="link"

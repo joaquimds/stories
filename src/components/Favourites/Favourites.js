@@ -12,15 +12,15 @@ const Favourites = () => {
 }
 
 Favourites.query = gql`
-  query LikedSentences($search: String, $offset: Int) {
-    likedSentences(search: $search, offset: $offset) {
+  query LikedStories($search: String, $offset: Int) {
+    likedStories(search: $search, offset: $offset) {
       count
-      sentences {
-        ...SentenceFragment
+      stories {
+        ...StoryFragment
       }
     }
   }
-  ${fragments.sentence}
+  ${fragments.story}
 `
 
 export default Favourites

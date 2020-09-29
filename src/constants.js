@@ -1,5 +1,5 @@
 export const ORDERS = [
-  { label: 'Popular', value: 'likes' },
+  { label: 'Popular', value: 'score' },
   { label: 'Newest', value: 'newest' },
   { label: 'Oldest', value: 'oldest' },
 ]

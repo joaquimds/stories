@@ -7,7 +7,7 @@ import styles from './Library.module.scss'
 
 const Library = () => {
   const [search, setSearch] = useState('')
-  const [order, setOrder] = useState('likes')
+  const [order, setOrder] = useState('score')
   const { data, fetchMore } = useQuery(Library.query, {
     variables: {
       search,
@@ -15,13 +15,12 @@ const Library = () => {
     },
   })
   const hasData = data && data.stories
-  const hasResults = hasData && data.stories.sentences.length
+  const stories = data?.stories?.stories || []
 
   const onClickLoadMore = () => {
-    const sentences = data && data.stories ? data.stories.sentences : []
     fetchMore({
       variables: {
-        exclude: sentences.map((s) => s.id),
+        offset: stories.length,
       },
     })
   }
@@ -35,9 +34,9 @@ const Library = () => {
         onChange={(e) => setSearch(e.target.value)}
       />
       {hasData ? (
-        hasResults ? (
+        stories.length ? (
           <>
-            {data.stories.sentences.length > 1 ? (
+            {stories.length > 1 ? (
               <div className={styles.sort}>
                 {ORDERS.map((o) => (
                   <button
@@ -52,8 +51,8 @@ const Library = () => {
               </div>
             ) : null}
             <ul className={styles.list}>
-              {data.stories.sentences.map(renderSentence)}
-              {data.stories.sentences.length < data.stories.count ? (
+              {stories.map(renderStory)}
+              {stories.length < data.stories.count ? (
                 <li className={styles['load-more']}>
                   <button
                     className="link"
@@ -76,13 +75,13 @@ const Library = () => {
   )
 }
 
-const renderSentence = (sentence) => {
+const renderStory = (story) => {
   return (
-    <li key={sentence.id} className={styles.story}>
-      {sentence.title ? <h2>{sentence.title}</h2> : null}
+    <li key={story.id} className={styles.story}>
+      {story.title ? <h2>{story.title}</h2> : null}
       <p>
-        <Link href="/[slug]" as={`/${sentence.slug || sentence.id}`}>
-          <a>{sentence.intro}</a>
+        <Link href="/[slug]" as={story.permalink}>
+          <a>{story.intro}</a>
         </Link>
       </p>
     </li>
@@ -94,16 +93,17 @@ const buttonClass = (order, current) => {
 }
 
 Library.query = gql`
-  query Stories($search: String, $order: Order, $exclude: [String]) {
-    stories(search: $search, order: $order, exclude: $exclude) {
+  query Stories($search: String, $order: Order, $offset: Int) {
+    stories(search: $search, order: $order, offset: $offset) {
       count
-      sentences {
-        ...SentenceFragment
+      stories {
+        ...StoryFragment
+        title
         intro
       }
     }
   }
-  ${fragments.sentence}
+  ${fragments.story}
 `
 
 export default Library
