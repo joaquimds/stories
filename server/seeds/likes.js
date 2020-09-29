@@ -21,19 +21,19 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 6,
-    likeId: 1,
+    likeId: 2,
     userId: 1,
     type: 'LIKE',
   })
   await knex('points').insert({
     sentenceId: 7,
-    likeId: 1,
+    likeId: 3,
     userId: 1,
     type: 'LIKE',
   })
   await knex('points').insert({
     sentenceId: 8,
-    likeId: 1,
+    likeId: 4,
     userId: 1,
     type: 'LIKE',
   })

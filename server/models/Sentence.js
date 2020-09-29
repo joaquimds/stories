@@ -1,4 +1,4 @@
-import { Model, ref } from 'objection'
+import { Model, ref, raw } from 'objection'
 import { parseThread, printThread } from '../util/threads'
 import { Point } from './Point'
 import { SentenceLink } from './SentenceLink'
@@ -86,7 +86,7 @@ export class Sentence extends Model {
     return Number(countQuery.count)
   }
 
-  async getChildren(order = 'score', exclude = [], limit = 3) {
+  async getChildren(storyId, order = 'score', exclude = [], limit = 3) {
     const subquery = SentenceLink.query()
       .select('from')
       .where({ to: ref('sentences.id') })
@@ -98,8 +98,8 @@ export class Sentence extends Model {
       .join('sentenceLinks', 'sentenceLinks.to', 'sentences.id')
       .whereNotIn('sentences.id', exclude)
       .andWhere('sentenceLinks.from', '=', this.id)
-    Sentence.addOrder(query, order)
-    return query.limit(limit)
+    Sentence.addOrder(query, storyId, order)
+    return query.limit(limit).debug()
   }
 
   async createPoints(thread, params) {
@@ -124,14 +124,14 @@ export class Sentence extends Model {
     }
   }
 
-  getThread() {
+  getCreatedThread() {
     const thread = parseThread(this.storyParentId)
     thread.end = this.id
     return thread
   }
 
-  static addOrder(query, order = 'oldest') {
-    let subquery
+  static addOrder(query, storyId, order = 'oldest') {
+    const subqueries = []
     switch (order) {
       case 'newest':
         query.orderBy('id', 'desc')
@@ -141,11 +141,22 @@ export class Sentence extends Model {
         break
       case 'score':
       default:
-        subquery = Point.query()
-          .count()
-          .as('score')
-          .where({ sentenceId: ref('sentences.id') })
-        query.select(subquery)
+        subqueries.push(
+          Sentence.query()
+            .count()
+            .from(raw('sentences s1'))
+            .as('match')
+            .whereRaw('s1.id = sentences.id')
+            .andWhereRaw('s1.story_parent_id = ?', storyId)
+        )
+        subqueries.push(
+          Point.query()
+            .count()
+            .as('score')
+            .where({ sentenceId: ref('sentences.id') })
+        )
+        query.select(subqueries)
+        query.orderBy('match', 'desc')
         query.orderBy('score', 'desc')
         query.orderBy('id', 'asc')
         break

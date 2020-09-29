@@ -46,7 +46,7 @@ export const resolvers = {
         query.where('title', 'ilike', `%${escapedSearch}%`)
       }
       const countResult = await query.clone().count().first()
-      Sentence.addOrder(query, order)
+      Sentence.addOrder(query, null, order)
       const sentences = await query
         .select('sentences.*', 'titles.storyId')
         .limit(LIMIT)
@@ -72,7 +72,7 @@ export const resolvers = {
       const countResult = await query.clone().count().first()
       const sentences = await query.offset(offset).limit(LIMIT)
       const stories = sentences.map((sentence) => {
-        const thread = sentence.getThread()
+        const thread = sentence.getCreatedThread()
         return {
           id: printThread(thread),
           ending: sentence,
@@ -147,8 +147,8 @@ export const resolvers = {
     childCount: ({ ending }) => {
       return ending.countChildren()
     },
-    children: async ({ ending, thread }, { order, exclude }) => {
-      const children = await ending.getChildren(order, exclude, LIMIT)
+    children: async ({ id, ending, thread }, { order, exclude }) => {
+      const children = await ending.getChildren(id, order, exclude, LIMIT)
       return children.map((c) => {
         if (c.defaultParent !== ending.id) {
           thread = addThreadStep(thread, c.id, ending.id)
@@ -198,7 +198,7 @@ export const resolvers = {
           from: parentThread.end,
           to: ending.id,
         })
-        const thread = ending.getThread()
+        const thread = ending.getCreatedThread()
         await ending.createPoints(thread, {
           userId: user.id,
           parentId: ending.id,
