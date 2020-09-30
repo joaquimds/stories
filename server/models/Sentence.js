@@ -51,28 +51,31 @@ export class Sentence extends Model {
       .orderBy('parents.id', 'asc')
     let childId = this.id
     const parents = []
-    const counts = {}
-    const backtrace = [...thread.backtrace]
+    let backtrace = [...thread.backtrace]
     while (childId) {
-      counts[childId] = counts[childId] ? counts[childId] + 1 : 1
       const backlink = backtrace[0]
       let parent
       if (backlink) {
         const { from, count, to } = backlink
-        if (from === childId && count === counts[childId]) {
+        if (from === childId && count === 1) {
           parent = allParents.find(({ id }) => id === to)
           backtrace.shift()
+          backtrace = backtrace.map((p) => {
+            const c = p.from === childId ? p.count - 1 : p.count
+            return { ...p, count: c }
+          })
         }
       }
       if (!parent) {
         parent = allParents.find(({ to }) => to === childId)
       }
       if (parent) {
-        const thread = {
-          end: parent.id,
-          backtrace: [...backtrace],
-        }
-        parents.push({ ending: parent, thread, id: printThread(thread) })
+        const parentThread = { end: parent.id, backtrace: [...backtrace] }
+        parents.push({
+          ending: parent,
+          thread: parentThread,
+          id: printThread(parentThread),
+        })
       }
       childId = parent?.id
     }

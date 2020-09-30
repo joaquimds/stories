@@ -115,7 +115,7 @@ export const resolvers = {
       const links = await SentenceLink.query()
         .select('to')
         .where({ from: thread.end })
-      const excluded = links.map((l) => l.to).concat(['0', thread.end])
+      const excluded = links.map((l) => l.to).concat(['0'])
       const query = Sentence.query().whereNotIn('id', excluded)
       if (search) {
         const escapedSearch = search.replace(/%/g, '\\%')
