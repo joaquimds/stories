@@ -150,11 +150,12 @@ export const resolvers = {
     children: async ({ id, ending, thread }, { order, exclude }) => {
       const children = await ending.getChildren(id, order, exclude, LIMIT)
       return children.map((c) => {
+        let childThread = { ...thread }
         if (c.defaultParent !== ending.id) {
-          thread = addThreadStep(thread, c.id, ending.id)
+          childThread = addThreadStep(thread, c.id, ending.id)
         }
-        thread.end = c.id
-        const id = printThread(thread)
+        childThread.end = c.id
+        const id = printThread(childThread)
         return { id, thread, ending: c }
       })
     },
@@ -201,7 +202,8 @@ export const resolvers = {
         const thread = ending.getCreatedThread()
         await ending.createPoints(thread, {
           userId: user.id,
-          parentId: ending.id,
+          sourceId: ending.id,
+          type: 'WRITE',
         })
         return { story: { id: printThread(thread), thread, ending } }
       } catch (e) {
@@ -261,10 +263,15 @@ export const resolvers = {
         if (sentence.authorId !== authorId) {
           return { errorCode: 403 }
         }
-        await Point.query().delete().where({ parentId: sentence.id })
+        await Point.query()
+          .delete()
+          .where({ sourceId: sentence.id, type: 'WRITE' })
         const likes = await Like.query().where({ sentenceId: sentence.id })
         const likeIds = likes.map((l) => l.id)
-        await Point.query().delete().whereIn('likeId', likeIds)
+        await Point.query()
+          .delete()
+          .whereIn('sourceId', likeIds)
+          .andWhere({ type: 'LIKE' })
         await Like.query().delete().whereIn('id', likeIds)
         if (sentence.children.length) {
           const updated = await Sentence.query().patchAndFetchById(id, {
@@ -295,7 +302,9 @@ export const resolvers = {
         if (!isLike) {
           const like = await Like.query().findOne(queryArgs)
           if (like) {
-            await Point.query().delete().where({ likeId: like.id })
+            await Point.query()
+              .delete()
+              .where({ sourceId: like.id, type: 'LIKE' })
           }
           await Like.query().where(queryArgs).delete()
           return {}
@@ -309,8 +318,9 @@ export const resolvers = {
           sentenceId: sentence.id,
         })
         await sentence.createPoints(thread, {
-          likeId: like.id,
+          sourceId: like.id,
           userId: user.id,
+          type: 'LIKE',
         })
         return {}
       } catch (e) {

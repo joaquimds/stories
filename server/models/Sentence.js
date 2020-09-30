@@ -1,4 +1,4 @@
-import { Model, ref, raw } from 'objection'
+import { Model, ref } from 'objection'
 import { parseThread, printThread } from '../util/threads'
 import { Point } from './Point'
 import { SentenceLink } from './SentenceLink'
@@ -33,7 +33,7 @@ export class Sentence extends Model {
 
   async getParents(thread) {
     const allParents = await Sentence.query()
-      .select('*')
+      .select('sentences.*', 'parents.from', 'parents.to')
       .from('parents')
       .join('sentences', 'parents.from', 'sentences.id')
       .withRecursive('parents', (qb1) => {
@@ -99,28 +99,26 @@ export class Sentence extends Model {
       .whereNotIn('sentences.id', exclude)
       .andWhere('sentenceLinks.from', '=', this.id)
     Sentence.addOrder(query, storyId, order)
-    return query.limit(limit).debug()
+    return query.limit(limit)
   }
 
   async createPoints(thread, params) {
     const parents = await this.getParents(thread)
-    const ids = {}
-    for (const parent of parents) {
-      ids[parent.id] = true
-    }
-    ids[this.id] = true
-    delete ids['0']
-    const type = params.likeId ? 'LIKE' : 'WRITE'
-    for (const sentenceId of Object.keys(ids)) {
-      const item = { sentenceId, type, ...params }
+    let sentenceId = this.id
+    while (parents.length) {
+      const parent = parents.pop()
+      const storyParentId = parent.id
+      const item = { sentenceId, storyParentId, ...params }
       const point = await Point.query().findOne({
         sentenceId,
+        storyParentId,
         userId: params.userId,
-        type,
+        type: params.type,
       })
       if (!point) {
         await Point.query().insert(item)
       }
+      sentenceId = parent.ending.id
     }
   }
 
@@ -131,7 +129,7 @@ export class Sentence extends Model {
   }
 
   static addOrder(query, storyId, order = 'oldest') {
-    const subqueries = []
+    let subquery
     switch (order) {
       case 'newest':
         query.orderBy('id', 'desc')
@@ -141,22 +139,11 @@ export class Sentence extends Model {
         break
       case 'score':
       default:
-        subqueries.push(
-          Sentence.query()
-            .count()
-            .from(raw('sentences s1'))
-            .as('match')
-            .whereRaw('s1.id = sentences.id')
-            .andWhereRaw('s1.story_parent_id = ?', storyId)
-        )
-        subqueries.push(
-          Point.query()
-            .count()
-            .as('score')
-            .where({ sentenceId: ref('sentences.id') })
-        )
-        query.select(subqueries)
-        query.orderBy('match', 'desc')
+        subquery = Point.query()
+          .count()
+          .as('score')
+          .where({ sentenceId: ref('sentences.id'), storyParentId: storyId })
+        query.select(subquery)
         query.orderBy('score', 'desc')
         query.orderBy('id', 'asc')
         break

@@ -21,7 +21,8 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 1,
-    parentId: 1,
+    storyParentId: '0',
+    sourceId: 1,
     userId: 1,
     type: 'WRITE',
   })
@@ -44,7 +45,8 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 2,
-    parentId: 2,
+    storyParentId: '1',
+    sourceId: 2,
     userId: 1,
     type: 'WRITE',
   })
@@ -61,7 +63,8 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 3,
-    parentId: 3,
+    storyParentId: '1',
+    sourceId: 3,
     userId: 1,
     type: 'WRITE',
   })
@@ -84,7 +87,8 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 4,
-    parentId: 4,
+    storyParentId: '1',
+    sourceId: 4,
     userId: 1,
     type: 'WRITE',
   })
@@ -107,7 +111,8 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 5,
-    parentId: 5,
+    storyParentId: '1',
+    sourceId: 5,
     userId: 1,
     type: 'WRITE',
   })
@@ -132,7 +137,8 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 6,
-    parentId: 6,
+    storyParentId: '3',
+    sourceId: 6,
     userId: 1,
     type: 'WRITE',
   })
@@ -154,7 +160,8 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 7,
-    parentId: 7,
+    storyParentId: '6',
+    sourceId: 7,
     userId: 1,
     type: 'WRITE',
   })
@@ -170,7 +177,8 @@ exports.seed = async (knex) => {
   })
   await knex('points').insert({
     sentenceId: 8,
-    parentId: 8,
+    storyParentId: '7',
+    sourceId: 8,
     userId: 1,
     type: 'WRITE',
   })
