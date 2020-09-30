@@ -129,6 +129,10 @@ const createApolloClient = (initialState = {}, context = {}) => {
             keyArgs: ['search', 'order'],
             merge: mergeStories,
           },
+          otherSentences: {
+            keyArgs: ['search', 'from'],
+            merge: mergeSentences,
+          },
         },
       },
       Story: {
@@ -163,6 +167,13 @@ const mergeStories = (existing = {}, incoming = {}, options) => {
   return {
     ...incoming,
     stories: mergeChildren(existing.stories, incoming.stories, options),
+  }
+}
+
+const mergeSentences = (existing = {}, incoming = {}, options) => {
+  return {
+    ...incoming,
+    sentences: mergeChildren(existing.sentences, incoming.sentences, options),
   }
 }
 

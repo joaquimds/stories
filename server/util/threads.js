@@ -13,15 +13,18 @@ export const parseThread = (thread) => {
   return { end, backtrace }
 }
 
-export const addThreadStep = (thread, from, to) => {
-  const newTrace = thread.backtrace.map((p) => {
-    if (p.from === from) {
-      return { ...p, count: p.count + 1 }
-    }
-    return p
-  })
-  newTrace.unshift({ from, to, count: 1 })
-  return { ...thread, backtrace: newTrace }
+export const addThreadStep = (thread, from, to, defaultParent = null) => {
+  let backtrace = [...thread.backtrace]
+  if (defaultParent !== to) {
+    backtrace = backtrace.map((p) => {
+      if (p.from === from) {
+        return { ...p, count: p.count + 1 }
+      }
+      return p
+    })
+    backtrace.unshift({ from, to, count: 1 })
+  }
+  return { end: from, backtrace }
 }
 
 export const printThread = (thread) => {

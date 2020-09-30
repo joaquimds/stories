@@ -30,11 +30,16 @@ export const typeDefs = gql`
     count: Int!
     stories: [Story]!
   }
+  type SentenceList {
+    count: Int!
+    sentences: [Sentence]!
+  }
   type Query {
     story(slug: String!): Story
     stories(search: String, order: Order, offset: Int): StoryList!
     myStories(search: String, offset: Int): StoryList!
     likedStories(search: String, offset: Int): StoryList!
+    otherSentences(from: String!, search: String, offset: Int): SentenceList!
   }
   type Response {
     errorCode: Int
@@ -53,6 +58,7 @@ export const typeDefs = gql`
   }
   type Mutation {
     addSentenceMutation(content: String!, parentId: String!): StoryResponse
+    linkSentenceMutation(parentId: String!, childId: String!): StoryResponse
     saveStoryMutation(id: String!, title: String!): SaveResponse
     deleteSentenceMutation(id: String!): SentenceResponse
     likeStoryMutation(id: String!, like: Boolean!): Response

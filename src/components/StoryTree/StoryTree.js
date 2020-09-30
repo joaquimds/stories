@@ -57,7 +57,7 @@ const StoryTree = ({ slug }) => {
   return (
     <div className={styles.container}>
       <div className={`${styles.half} ${styles.top}`}>
-        <div className={styles.content}>
+        <div className={`${styles.content} ${styles.page}`}>
           {slug !== '0' ? (
             <Page story={story} />
           ) : (
@@ -107,9 +107,7 @@ const StoryTree = ({ slug }) => {
                   </button>
                 </div>
               ) : null}
-              <div className={styles.write}>
-                <Write parentId={story.id} />
-              </div>
+              <Write parentId={story.id} />
             </>
           ) : null}
         </div>
