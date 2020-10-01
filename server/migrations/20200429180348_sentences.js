@@ -4,13 +4,14 @@ exports.up = (knex) => {
       table.bigIncrements()
       table.text('storyParentId').notNullable()
       table.text('content').notNullable()
-      table.bigInteger('authorId')
+      table.bigInteger('authorId').index()
       table.dateTime('date').defaultTo(knex.fn.now())
     })
     .createTable('sentenceLinks', (table) => {
       table.bigIncrements()
       table.bigInteger('from').index().notNullable()
       table.bigInteger('to').index().notNullable()
+      table.bigInteger('authorId').index().notNullable()
       table.unique(['from', 'to'])
     })
 }

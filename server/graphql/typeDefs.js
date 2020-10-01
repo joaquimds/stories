@@ -25,6 +25,7 @@ export const typeDefs = gql`
     title: String
     permalink: String!
     liked: Boolean!
+    linkAuthor: User
   }
   type StoryList {
     count: Int!
@@ -61,6 +62,7 @@ export const typeDefs = gql`
     linkSentenceMutation(parentId: String!, childId: String!): StoryResponse
     saveStoryMutation(id: String!, title: String!): SaveResponse
     deleteSentenceMutation(id: String!): SentenceResponse
+    unlinkSentenceMutation(id: String!): Response
     likeStoryMutation(id: String!, like: Boolean!): Response
   }
 `

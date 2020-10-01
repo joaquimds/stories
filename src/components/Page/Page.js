@@ -39,6 +39,14 @@ const DELETE_SENTENCE_MUTATION = gql`
   ${fragments.sentence}
 `
 
+const UNLINK_SENTENCE_MUTATION = gql`
+  mutation UnlinkSentenceMutation($id: String!) {
+    unlinkSentenceMutation(id: $id) {
+      errorCode
+    }
+  }
+`
+
 const Page = ({ story }) => {
   const router = useRouter()
   const user = useContext(UserContext)
@@ -55,6 +63,13 @@ const Page = ({ story }) => {
     variables: { id: story.ending.id },
   })
 
+  const [unlinkSentence, { loading: unlinkLoading }] = useMutation(
+    UNLINK_SENTENCE_MUTATION,
+    {
+      variables: { id: story.id },
+    }
+  )
+
   const [saveSentence, { loading: saveLoading }] = useMutation(
     SAVE_SENTENCE_MUTATION
   )
@@ -64,6 +79,8 @@ const Page = ({ story }) => {
   )
 
   const isAuthor = user && ending.author && ending.author.id === user.id
+  const isLinkAuthor =
+    user && story.linkAuthor && story.linkAuthor.id === user.id
   const setErrorFromCode = (errorCode) => {
     setError(ERRORS[errorCode] || `Unknown error ${errorCode}`)
   }
@@ -115,6 +132,29 @@ const Page = ({ story }) => {
             fragment: fragments.sentence,
             data: updated,
           })
+        }
+        const parent = parents[parents.length - 1]
+        await cache.reset()
+        if (parent.id === '0') {
+          return router.push('/')
+        }
+        return router.push('/[slug]', parent.permalink)
+      },
+    })
+  }
+
+  const onClickUnlink = async () => {
+    await unlinkSentence({
+      async update(
+        cache,
+        {
+          data: {
+            unlinkSentenceMutation: { errorCode },
+          },
+        }
+      ) {
+        if (errorCode) {
+          return setErrorFromCode(errorCode)
         }
         const parent = parents[parents.length - 1]
         await cache.reset()
@@ -289,7 +329,18 @@ const Page = ({ story }) => {
                 delete
               </button>
             </>
-          ) : ending.author ? (
+          ) : null}
+          {isLinkAuthor ? (
+            <button
+              type="button"
+              onClick={onClickUnlink}
+              disabled={unlinkLoading}
+              className={`link ${styles.delete}`}
+            >
+              unlink
+            </button>
+          ) : null}
+          {!isAuthor && !isLinkAuthor && ending.author ? (
             <button
               type="button"
               onClick={onClickReport}
@@ -348,6 +399,10 @@ Page.propTypes = {
   story: PropTypes.shape({
     id: PropTypes.string,
     title: PropTypes.string,
+    linkAuthor: PropTypes.shape({
+      id: PropTypes.string,
+      name: PropTypes.string,
+    }),
     parents: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,

@@ -141,6 +141,10 @@ StoryTree.query = gql`
       id
       title
       liked
+      linkAuthor {
+        id
+        name
+      }
       parents {
         ...StoryFragment
       }

@@ -188,6 +188,19 @@ export const resolvers = {
       })
       return Boolean(like)
     },
+    linkAuthor: async ({ thread: { end, backtrace } }) => {
+      if (backtrace.length && end === backtrace[0].from) {
+        const backlink = backtrace[0]
+        const sentenceLink = await SentenceLink.query().findOne({
+          from: backlink.to,
+          to: backlink.from,
+        })
+        if (sentenceLink) {
+          return User.query().findById(sentenceLink.authorId)
+        }
+      }
+      return null
+    },
   },
   Sentence: {
     content: ({ id, content, authorId }) => {
@@ -217,6 +230,7 @@ export const resolvers = {
         await SentenceLink.query().insert({
           from: parentThread.end,
           to: ending.id,
+          authorId: user.id,
         })
         const thread = ending.getCreatedThread()
         await ending.createPoints(thread, {
@@ -248,6 +262,7 @@ export const resolvers = {
         await SentenceLink.query().insert({
           from: parentSentence.id,
           to: ending.id,
+          authorId: user.id,
         })
         const thread = addThreadStep(parentThread, ending.id, parentSentence.id)
         return { story: { id: printThread(thread), thread, ending } }
@@ -334,6 +349,35 @@ export const resolvers = {
         return {}
       } catch (e) {
         logger.error('%s %o %o', 'deleteSentenceMutation', args, e.message)
+        return { errorCode: 500 }
+      }
+    },
+    unlinkSentenceMutation: async (parent, args, { user }) => {
+      const { id } = args
+      if (!user) {
+        return { errorCode: 403 }
+      }
+      const { end, backtrace } = parseThread(id)
+      if (!backtrace.length || end !== backtrace[0].from) {
+        return { errorCode: 400 }
+      }
+      const backlink = backtrace[0]
+      const sentenceLink = await SentenceLink.query().findOne({
+        from: backlink.to,
+        to: backlink.from,
+      })
+      if (!sentenceLink) {
+        return { errorCode: 400 }
+      }
+      const authorId = user.id
+      if (sentenceLink.authorId !== authorId) {
+        return { errorCode: 403 }
+      }
+      try {
+        await SentenceLink.query().deleteById(sentenceLink.id)
+        return {}
+      } catch (e) {
+        logger.error('%s %o %o', 'unlinkSentenceMutation', args, e.message)
         return { errorCode: 500 }
       }
     },
