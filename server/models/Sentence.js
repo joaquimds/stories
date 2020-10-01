@@ -56,14 +56,10 @@ export class Sentence extends Model {
       const backlink = backtrace[0]
       let parent
       if (backlink) {
-        const { from, count, to } = backlink
-        if (from === childId && count === 1) {
+        const { from, to } = backlink
+        if (from === childId) {
           parent = allParents.find(({ id }) => id === to)
           backtrace.shift()
-          backtrace = backtrace.map((p) => {
-            const c = p.from === childId ? p.count - 1 : p.count
-            return { ...p, count: c }
-          })
         }
       }
       if (!parent) {
