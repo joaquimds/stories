@@ -18,6 +18,7 @@ export const typeDefs = gql`
   type Story {
     id: String!
     intro: String!
+    parent: Story
     parents: [Story]!
     ending: Sentence!
     childCount: Int!
@@ -39,6 +40,7 @@ export const typeDefs = gql`
     story(slug: String!): Story
     stories(search: String, order: Order, offset: Int): StoryList!
     myStories(search: String, offset: Int): StoryList!
+    myLinks(search: String, offset: Int): StoryList!
     likedStories(search: String, offset: Int): StoryList!
     otherSentences(from: String!, search: String, offset: Int): SentenceList!
   }

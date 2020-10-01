@@ -31,6 +31,35 @@ export class Sentence extends Model {
     },
   }
 
+  async getParent(thread) {
+    const query = Sentence.query()
+      .select('sentences.*')
+      .join('sentenceLinks', 'sentences.id', 'sentenceLinks.from')
+      .where('sentenceLinks.to', '=', this.id)
+    const backtrace = [...thread.backtrace]
+    const backlink = backtrace[0]
+    let parent
+    if (backlink && backlink.from === this.id) {
+      parent = await query
+        .clone()
+        .andWhere('sentenceLinks.from', '=', backlink.to)
+        .first()
+      backtrace.shift()
+    }
+    if (!parent) {
+      parent = await query
+        .orderBy(ref('sentenceLinks.id'), 'asc')
+        .limit(1)
+        .first()
+    }
+    const parentThread = { end: parent.id, backtrace: [...backtrace] }
+    return {
+      ending: parent,
+      thread: parentThread,
+      id: printThread(parentThread),
+    }
+  }
+
   async getParents(thread) {
     const allParents = await Sentence.query()
       .select('sentences.*', 'parents.from', 'parents.to')

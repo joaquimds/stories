@@ -1,3 +1,4 @@
+import { raw, ref } from 'objection'
 import { Like } from '../models/Like'
 import { Point } from '../models/Point'
 import { Sentence } from '../models/Sentence'
@@ -81,6 +82,41 @@ export const resolvers = {
       })
       return { count: countResult.count, stories }
     },
+    myLinks: async (parent, { search, offset = 0 }, { user }) => {
+      if (!user) {
+        return null
+      }
+      const query = Sentence.query()
+        .from(raw('sentences sf'))
+        .join('sentenceLinks', 'sf.id', 'sentenceLinks.from')
+        .join(raw('sentences st'), 'st.id', 'sentenceLinks.to')
+        .where('sentenceLinks.authorId', '=', user.id)
+      if (search) {
+        const escapedSearch = search.replace(/%/g, '\\%')
+        query.andWhere((queryBuilder) => {
+          queryBuilder
+            .where(ref('sf.content'), 'ilike', `%${escapedSearch}%`)
+            .orWhere(ref('st.content'), 'ilike', `%${escapedSearch}%`)
+        })
+      }
+      const countResult = await query.clone().count().first()
+      const sentences = await query
+        .select('st.*', 'sentenceLinks.from', 'sentenceLinks.to')
+        .offset(offset)
+        .limit(LIMIT)
+      const stories = sentences.map((sentence) => {
+        const thread = {
+          end: sentence.id,
+          backtrace: [{ from: sentence.to, to: sentence.from }],
+        }
+        return {
+          id: printThread(thread),
+          ending: sentence,
+          thread,
+        }
+      })
+      return { count: countResult.count, stories }
+    },
     likedStories: async (parent, { search, offset = 0 }, { user }) => {
       if (!user) {
         return []
@@ -156,6 +192,12 @@ export const resolvers = {
       const titleEntity = await Title.query().findOne({ storyId: id })
       return titleEntity ? `/${titleEntity.slug}` : `/${id}`
     },
+    parent: async ({ ending, thread }) => {
+      if (ending.id === '0') {
+        return null
+      }
+      return ending.getParent(thread)
+    },
     parents: async ({ ending, thread }) => {
       if (ending.id === '0') {
         return []
@@ -191,10 +233,13 @@ export const resolvers = {
     linkAuthor: async ({ thread: { end, backtrace } }) => {
       if (backtrace.length && end === backtrace[0].from) {
         const backlink = backtrace[0]
-        const sentenceLink = await SentenceLink.query().findOne({
-          from: backlink.to,
-          to: backlink.from,
-        })
+        const sentenceLink = await SentenceLink.query()
+          .where({
+            from: backlink.to,
+            to: backlink.from,
+          })
+          .andWhereNot({ authorId: null })
+          .first()
         if (sentenceLink) {
           return User.query().findById(sentenceLink.authorId)
         }
@@ -263,6 +308,7 @@ export const resolvers = {
           from: parentSentence.id,
           to: ending.id,
           authorId: user.id,
+          additional: true,
         })
         const thread = addThreadStep(parentThread, ending.id, parentSentence.id)
         return { story: { id: printThread(thread), thread, ending } }

@@ -259,6 +259,9 @@ const updateCache = (cache, storyParentId, newStory) => {
       myStories({ DELETE }) {
         return DELETE
       },
+      myLinks({ DELETE }) {
+        return DELETE
+      },
       otherSentences({ DELETE }) {
         return DELETE
       },

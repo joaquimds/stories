@@ -27,6 +27,11 @@ const Account = () => {
           </Link>
         </li>
         <li>
+          <Link href="/account/links">
+            <a>Your Links</a>
+          </Link>
+        </li>
+        <li>
           <Link href="/account/favourites">
             <a>Your Favourites</a>
           </Link>

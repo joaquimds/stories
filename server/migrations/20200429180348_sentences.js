@@ -11,7 +11,7 @@ exports.up = (knex) => {
       table.bigIncrements()
       table.bigInteger('from').index().notNullable()
       table.bigInteger('to').index().notNullable()
-      table.bigInteger('authorId').index().notNullable()
+      table.bigInteger('authorId').index()
       table.unique(['from', 'to'])
     })
 }

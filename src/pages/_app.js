@@ -11,7 +11,8 @@ import NProgress from '../services/nprogress'
 
 const nprogress = new NProgress()
 
-const MyApp = ({ Component, pageProps, user: initialUser }) => {
+const MyApp = (props) => {
+  const { Component, pageProps, user: initialUser } = props
   const router = useRouter()
   const [user] = useState(initialUser)
 

@@ -41,7 +41,12 @@ const AccountSentenceList = ({ query }) => {
                 <li key={story.id} className={styles.sentence}>
                   <p>
                     <Link href="/[slug]" as={story.permalink}>
-                      <a>{story.ending.content}</a>
+                      <a>
+                        {story.parent
+                          ? `${story.parent.ending.content} → `
+                          : ''}
+                        {story.ending.content}
+                      </a>
                     </Link>
                   </p>
                 </li>

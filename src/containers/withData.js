@@ -60,6 +60,8 @@ const withData = (PageComponent, { ssr } = {}) => {
           try {
             await ctx.req.getDataFromTree(
               <AppTree
+                // MyApp.getInitialProps is skipped
+                user={ctx.req.user}
                 pageProps={{
                   ...pageProps,
                   apolloClient,
@@ -118,6 +120,10 @@ const createApolloClient = (initialState = {}, context = {}) => {
       Query: {
         fields: {
           myStories: {
+            keyArgs: ['search'],
+            merge: mergeStories,
+          },
+          myLinks: {
             keyArgs: ['search'],
             merge: mergeStories,
           },

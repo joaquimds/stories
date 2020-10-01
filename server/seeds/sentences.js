@@ -18,7 +18,6 @@ exports.seed = async (knex) => {
   await knex('sentenceLinks').insert({
     from: 0,
     to: 1,
-    authorId: 1,
   })
   await knex('points').insert({
     sentenceId: 1,
@@ -43,7 +42,6 @@ exports.seed = async (knex) => {
   await knex('sentenceLinks').insert({
     from: 1,
     to: 2,
-    authorId: 1,
   })
   await knex('points').insert({
     sentenceId: 2,
@@ -62,7 +60,6 @@ exports.seed = async (knex) => {
   await knex('sentenceLinks').insert({
     from: 1,
     to: 3,
-    authorId: 1,
   })
   await knex('points').insert({
     sentenceId: 3,
@@ -87,7 +84,6 @@ exports.seed = async (knex) => {
   await knex('sentenceLinks').insert({
     from: 1,
     to: 4,
-    authorId: 1,
   })
   await knex('points').insert({
     sentenceId: 4,
@@ -112,7 +108,6 @@ exports.seed = async (knex) => {
   await knex('sentenceLinks').insert({
     from: 1,
     to: 5,
-    authorId: 1,
   })
   await knex('points').insert({
     sentenceId: 5,
@@ -131,7 +126,6 @@ exports.seed = async (knex) => {
   await knex('sentenceLinks').insert({
     from: 3,
     to: 6,
-    authorId: 1,
   })
   await knex('sentenceLinks').insert({
     from: 4,
@@ -165,7 +159,6 @@ exports.seed = async (knex) => {
   await knex('sentenceLinks').insert({
     from: 6,
     to: 7,
-    authorId: 1,
   })
   await knex('points').insert({
     sentenceId: 7,
@@ -183,7 +176,6 @@ exports.seed = async (knex) => {
   await knex('sentenceLinks').insert({
     from: 7,
     to: 8,
-    authorId: 1,
   })
   await knex('points').insert({
     sentenceId: 8,
