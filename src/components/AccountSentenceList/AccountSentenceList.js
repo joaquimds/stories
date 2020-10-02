@@ -43,7 +43,7 @@ const AccountSentenceList = ({ query }) => {
                     <Link href="/[slug]" as={story.permalink}>
                       <a>
                         {story.parent
-                          ? `${story.parent.ending.content} → `
+                          ? `${story.parent.ending.content || '(begin)'} → `
                           : ''}
                         {story.ending.content}
                       </a>

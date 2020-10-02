@@ -230,7 +230,8 @@ export const resolvers = {
       })
       return Boolean(like)
     },
-    linkAuthor: async ({ thread: { end, backtrace } }) => {
+    linkAuthor: async ({ id, thread }) => {
+      const { end, backtrace } = thread
       if (backtrace.length && end === backtrace[0].from) {
         const backlink = backtrace[0]
         const sentenceLink = await SentenceLink.query()
@@ -240,7 +241,8 @@ export const resolvers = {
           })
           .andWhereNot({ authorId: null })
           .first()
-        if (sentenceLink) {
+        const isProtected = await sentenceLink.isProtected(id)
+        if (sentenceLink && !isProtected) {
           return User.query().findById(sentenceLink.authorId)
         }
       }
@@ -308,7 +310,6 @@ export const resolvers = {
           from: parentSentence.id,
           to: ending.id,
           authorId: user.id,
-          additional: true,
         })
         const thread = addThreadStep(parentThread, ending.id, parentSentence.id)
         return { story: { id: printThread(thread), thread, ending } }
@@ -383,13 +384,13 @@ export const resolvers = {
           .delete()
           .whereIn('sourceId', likeIds)
           .andWhere({ type: 'LIKE' })
-        await Like.query().delete().whereIn('id', likeIds)
         if (sentence.children.length) {
           const updated = await Sentence.query().patchAndFetchById(id, {
             authorId: null,
           })
           return { sentence: updated }
         }
+        await Like.query().delete().whereIn('id', likeIds)
         await SentenceLink.query().delete().where({ to: id })
         await Sentence.query().deleteById(id)
         return {}
@@ -415,11 +416,23 @@ export const resolvers = {
       if (!sentenceLink) {
         return { errorCode: 400 }
       }
-      const authorId = user.id
-      if (sentenceLink.authorId !== authorId) {
+      if (sentenceLink.authorId !== user.id) {
+        return { errorCode: 403 }
+      }
+      const isProtected = await sentenceLink.isProtected(id)
+      if (isProtected) {
         return { errorCode: 403 }
       }
       try {
+        const likes = await Like.query()
+          .where('storyId', 'like', `%,${backlink.from}:${backlink.to}%`)
+          .andWhere('storyId', '~', `,${backlink.from}:${backlink.to}(,.*)?$`)
+        const likeIds = likes.map((l) => l.id)
+        await Point.query()
+          .delete()
+          .whereIn('sourceId', likeIds)
+          .andWhere({ type: 'LIKE' })
+        await Like.query().delete().whereIn('id', likeIds)
         await SentenceLink.query().deleteById(sentenceLink.id)
         return {}
       } catch (e) {

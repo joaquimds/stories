@@ -6,5 +6,6 @@ exports.seed = async (knex) => {
   const passwordHash = await hash(config.constants.initialAdminPassword)
   await knex('users').insert([
     { name: 'Admin', email: config.constants.adminEmail, passwordHash },
+    { name: 'Joaquim', email: `joaquim@example.com`, passwordHash },
   ])
 }
