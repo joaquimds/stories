@@ -3,7 +3,7 @@ import * as fragments from '../../graphql/fragments'
 import StoryList from '../StoryList/StoryList'
 
 const Library = () => {
-  return <StoryList query={Library.query} />
+  return <StoryList query={Library.query} hasOrder={true} />
 }
 
 Library.query = gql`

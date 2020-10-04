@@ -47,7 +47,25 @@ export const resolvers = {
         query.where('title', 'ilike', `%${escapedSearch}%`)
       }
       const countResult = await query.clone().count().first()
-      Sentence.addOrder(query, null, order)
+      let subquery
+      switch (order) {
+        case 'newest':
+          query.orderBy('id', 'desc')
+          break
+        case 'oldest':
+          query.orderBy('id', 'asc')
+          break
+        case 'score':
+        default:
+          subquery = Like.query()
+            .count()
+            .as('score')
+            .where({ storyId: ref('titles.storyId') })
+          query.select(subquery)
+          query.orderBy('score', 'desc')
+          query.orderBy('id', 'asc')
+          break
+      }
       const sentences = await query
         .select('sentences.*', 'titles.storyId')
         .limit(LIMIT)
@@ -123,10 +141,11 @@ export const resolvers = {
       }
       const query = Sentence.query()
         .join('likes', 'sentences.id', 'likes.sentenceId')
+        .leftOuterJoin('titles', 'sentences.id', 'titles.sentenceId')
         .whereNotNull('content')
       if (search) {
         const escapedSearch = search.replace(/%/g, '\\%')
-        query.andWhere('content', 'ilike', `%${escapedSearch}%`)
+        query.andWhere('title', 'ilike', `%${escapedSearch}%`)
       }
       const countResult = await query.clone().count().first()
       const sentences = await query
@@ -399,6 +418,7 @@ export const resolvers = {
           return { sentence: updated }
         }
         await Like.query().delete().whereIn('id', likeIds)
+        await Title.query().delete().where({ sentenceId: id })
         await SentenceLink.query().delete().where({ to: id })
         await Sentence.query().deleteById(id)
         return {}

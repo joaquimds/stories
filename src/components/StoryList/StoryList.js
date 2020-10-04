@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { ORDERS } from '../../constants'
 import styles from './StoryList.module.scss'
 
-const StoryList = ({ query }) => {
+const StoryList = ({ query, hasOrder }) => {
   const [search, setSearch] = useState('')
   const [order, setOrder] = useState('score')
   const { data, fetchMore } = useQuery(query, {
@@ -28,7 +28,7 @@ const StoryList = ({ query }) => {
 
   return (
     <div className={styles['story-list']}>
-      <label htmlFor="search">Search</label>
+      <label htmlFor="search">Search by title</label>
       <input
         id="search"
         value={search}
@@ -37,7 +37,7 @@ const StoryList = ({ query }) => {
       {result ? (
         stories.length ? (
           <>
-            {stories.length > 1 ? (
+            {stories.length > 1 && hasOrder ? (
               <div className={styles.sort}>
                 {ORDERS.map((o) => (
                   <button
@@ -95,6 +95,7 @@ const buttonClass = (order, current) => {
 
 StoryList.propTypes = {
   query: PropTypes.object,
+  hasOrder: PropTypes.bool,
 }
 
 export default StoryList
