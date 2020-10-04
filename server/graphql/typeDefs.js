@@ -18,7 +18,8 @@ export const typeDefs = gql`
   type Story {
     id: String!
     intro: String!
-    parent: Story
+    parent: Sentence
+    definedParents: [Sentence]!
     parents: [Story]!
     ending: Sentence!
     childCount: Int!

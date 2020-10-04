@@ -16,6 +16,9 @@ Favourites.query = gql`
     likedStories(search: $search, offset: $offset) {
       count
       stories {
+        definedParents {
+          ...SentenceFragment
+        }
         ...StoryFragment
       }
     }

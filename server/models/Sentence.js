@@ -52,12 +52,13 @@ export class Sentence extends Model {
         .limit(1)
         .first()
     }
-    const parentThread = { end: parent.id, backtrace: [...backtrace] }
-    return {
-      ending: parent,
-      thread: parentThread,
-      id: printThread(parentThread),
-    }
+    return parent
+  }
+
+  async getDefinedParents(thread) {
+    const parentIds = thread.backtrace.map((backlink) => backlink.to)
+    const parents = await Sentence.query().whereIn('id', parentIds)
+    return parentIds.map((id) => parents.find((parent) => parent.id === id))
   }
 
   async getParents(thread) {

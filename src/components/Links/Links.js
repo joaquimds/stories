@@ -17,7 +17,7 @@ Links.query = gql`
       count
       stories {
         parent {
-          ...StoryFragment
+          ...SentenceFragment
         }
         ...StoryFragment
       }

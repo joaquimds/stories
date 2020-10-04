@@ -198,6 +198,12 @@ export const resolvers = {
       }
       return ending.getParent(thread)
     },
+    definedParents: async ({ ending, thread }) => {
+      if (ending.id === '0') {
+        return []
+      }
+      return ending.getDefinedParents(thread)
+    },
     parents: async ({ ending, thread }) => {
       if (ending.id === '0') {
         return []
