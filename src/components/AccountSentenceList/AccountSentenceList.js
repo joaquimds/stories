@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import Link from 'next/link'
-import * as PropTypes from 'prop-types'
+import PropTypes from 'prop-types'
 import { useState } from 'react'
 import styles from './AccountSentenceList.module.scss'
 

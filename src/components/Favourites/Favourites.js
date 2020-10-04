@@ -1,12 +1,12 @@
 import { gql } from '@apollo/client/core'
 import * as fragments from '../../graphql/fragments'
-import AccountSentenceList from '../AccountSentenceList/AccountSentenceList'
+import StoryList from '../StoryList/StoryList'
 
 const Favourites = () => {
   return (
     <>
       <h1>Your Favourites</h1>
-      <AccountSentenceList query={Favourites.query} />
+      <StoryList query={Favourites.query} />
     </>
   )
 }
@@ -16,14 +16,16 @@ Favourites.query = gql`
     likedStories(search: $search, offset: $offset) {
       count
       stories {
-        definedParents {
+        id
+        permalink
+        title
+        keySentences {
           ...SentenceFragment
         }
-        ...StoryFragment
       }
     }
   }
-  ${fragments.story}
+  ${fragments.sentence}
 `
 
 export default Favourites

@@ -2,7 +2,7 @@ import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client'
 import { SchemaLink } from '@apollo/link-schema'
 import { ApolloProvider } from '@apollo/react-hooks'
 import Head from 'next/head'
-import * as PropTypes from 'prop-types'
+import PropTypes from 'prop-types'
 import React, { useMemo } from 'react'
 
 let apolloClient = null

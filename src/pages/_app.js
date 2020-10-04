@@ -1,7 +1,7 @@
 import '../styles/app.scss'
 import App from 'next/app'
 import Router, { useRouter } from 'next/router'
-import * as PropTypes from 'prop-types'
+import PropTypes from 'prop-types'
 import { useEffect, useState } from 'react'
 import Footer from '../components/Footer/Footer'
 import Head from '../components/Head/Head'

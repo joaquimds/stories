@@ -55,12 +55,6 @@ export class Sentence extends Model {
     return parent
   }
 
-  async getDefinedParents(thread) {
-    const parentIds = thread.backtrace.map((backlink) => backlink.to)
-    const parents = await Sentence.query().whereIn('id', parentIds)
-    return parentIds.map((id) => parents.find((parent) => parent.id === id))
-  }
-
   async getParents(thread) {
     const allParents = await Sentence.query()
       .select('sentences.*', 'parents.from', 'parents.to')

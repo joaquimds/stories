@@ -166,18 +166,6 @@ export const resolvers = {
     },
   },
   Story: {
-    intro: async ({ ending, thread }) => {
-      if (ending.id === '0') {
-        return ''
-      }
-      const parents = await ending.getParents(thread)
-      const firstParent = parents.filter(
-        ({ ending: { content, authorId } }) => {
-          return content && authorId
-        }
-      )[0]
-      return firstParent ? firstParent.ending.content : ending.content
-    },
     title: async ({ id, title }) => {
       if (title) {
         return title
@@ -198,11 +186,25 @@ export const resolvers = {
       }
       return ending.getParent(thread)
     },
-    definedParents: async ({ ending, thread }) => {
+    keySentences: async ({ ending, thread }, { limit }) => {
       if (ending.id === '0') {
         return []
       }
-      return ending.getDefinedParents(thread)
+      const allParents = await ending.getParents(thread)
+      const validParents = allParents
+        .map(({ ending }) => ending)
+        .filter(({ content, authorId }) => content && authorId)
+      let keySentences = validParents.length ? [validParents.shift()] : []
+      keySentences = keySentences.concat(
+        thread.backtrace.map(({ to }) =>
+          validParents.find(({ id }) => to === id)
+        )
+      )
+      keySentences.push(ending)
+      if (limit) {
+        return keySentences.slice(0, limit)
+      }
+      return keySentences
     },
     parents: async ({ ending, thread }) => {
       if (ending.id === '0') {
