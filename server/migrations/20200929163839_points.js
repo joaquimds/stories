@@ -6,7 +6,7 @@ exports.up = (knex) => {
     table.bigInteger('userId').index().notNullable()
     table.bigInteger('sourceId').index().notNullable()
     table.string('type', 16).notNullable()
-    table.unique(['sentenceId', 'storyParentId', 'userId', 'type'])
+    table.unique(['sentenceId', 'storyParentId', 'userId', 'sourceId', 'type'])
   })
 }
 

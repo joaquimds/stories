@@ -1,8 +1,10 @@
 import { constants, email } from '../../config'
 import { Sentence } from '../models/Sentence'
 import { SentenceLink } from '../models/SentenceLink'
+import { Title } from '../models/Title'
 import { User } from '../models/User'
 import { hash } from '../services/bcrypt'
+import { logger } from '../services/logger'
 import { slugify } from '../util/text'
 
 const STORIES = [
@@ -30,8 +32,14 @@ export const createFixtures = async () => {
   await Sentence.query().insert({
     id: 0,
     content: '',
+    storyParentId: 0,
   })
   const passwordHash = await hash(constants.initialAdminPassword)
+  await User.query().insert({
+    email: email.user,
+    name: 'Admin',
+    passwordHash,
+  })
   for (const story of STORIES) {
     const [emailName, emailHost] = email.user.split('@')
     const author = await User.query().insertAndFetch({
@@ -50,14 +58,24 @@ export const createFixtures = async () => {
       const child = await Sentence.query().insert({
         authorId: author.id,
         content: sentences[i],
-        title,
-        slug: title ? slugify(title) : null,
+        storyParentId: parentId,
       })
       await SentenceLink.query().insert({
         from: parentId,
         to: child.id,
       })
+      if (title) {
+        await Title.query().insert({
+          storyId: child.id,
+          sentenceId: child.id,
+          title,
+          slug: slugify(title),
+        })
+      }
+      const thread = { end: child.id, backtrace: [] }
+      await child.createPoints(thread, author.id, child.id, 'WRITE')
       parentId = child.id
+      logger.info(`Created sentence ${child.content}`)
     }
   }
 }

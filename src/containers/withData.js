@@ -37,7 +37,7 @@ const withData = (PageComponent, { ssr } = {}) => {
 
       // Initialize ApolloClient, add it to the ctx object so
       // we can use it in `PageComponent.getInitialProp`.
-      const context = { user: ctx.req ? ctx.req.user : null }
+      const context = ctx.req
       const apolloClient = initApolloClient(null, context)
       ctx.apolloClient = apolloClient
 

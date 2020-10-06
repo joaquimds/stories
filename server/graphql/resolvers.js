@@ -192,11 +192,11 @@ export const resolvers = {
       const titleEntity = await Title.query().findOne({ storyId: id })
       return titleEntity?.title
     },
-    permalink: async ({ id, slug }) => {
+    permalink: async ({ id, slug }, args, { dataLoaders }) => {
       if (slug) {
         return `/${slug}`
       }
-      const titleEntity = await Title.query().findOne({ storyId: id })
+      const titleEntity = await dataLoaders.titleLoader.load(id)
       return titleEntity ? `/${titleEntity.slug}` : `/${id}`
     },
     parent: async ({ ending, thread }) => {
@@ -283,8 +283,8 @@ export const resolvers = {
       }
       return authorId ? content : '[deleted]'
     },
-    author: ({ authorId }) => {
-      return authorId ? User.query().findById(authorId) : null
+    author: ({ authorId }, args, ctx) => {
+      return authorId ? ctx.dataLoaders.userLoader.load(authorId) : null
     },
   },
   Mutation: {
@@ -307,11 +307,7 @@ export const resolvers = {
           authorId: user.id,
         })
         const thread = ending.getCreatedThread()
-        await ending.createPoints(thread, {
-          userId: user.id,
-          sourceId: ending.id,
-          type: 'WRITE',
-        })
+        await ending.createPoints(thread, user.id, ending.id, 'WRITE')
         return { story: { id: printThread(thread), thread, ending } }
       } catch (e) {
         logger.error('%s %o %o', 'addSentenceMutation', args, e.message)
@@ -498,11 +494,7 @@ export const resolvers = {
           ...queryArgs,
           sentenceId: sentence.id,
         })
-        await sentence.createPoints(thread, {
-          sourceId: like.id,
-          userId: user.id,
-          type: 'LIKE',
-        })
+        await sentence.createPoints(thread, user.id, like.id, 'LIKE')
         return {}
       } catch (e) {
         logger.error('%s %o %o', 'likeStoryMutation', args, e.message)

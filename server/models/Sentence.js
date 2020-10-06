@@ -125,24 +125,18 @@ export class Sentence extends Model {
     return query.limit(limit)
   }
 
-  async createPoints(thread, params) {
+  async createPoints(thread, userId, sourceId, type) {
+    const params = { userId, sourceId, type }
     const parents = await this.getParents(thread)
+    const points = []
     let sentenceId = this.id
     while (parents.length) {
       const parent = parents.pop()
       const storyParentId = parent.id
-      const item = { sentenceId, storyParentId, ...params }
-      const point = await Point.query().findOne({
-        sentenceId,
-        storyParentId,
-        userId: params.userId,
-        type: params.type,
-      })
-      if (!point) {
-        await Point.query().insert(item)
-      }
+      points.push({ sentenceId, storyParentId, ...params })
       sentenceId = parent.ending.id
     }
+    await Point.query().insert(points)
   }
 
   getCreatedThread() {
@@ -152,7 +146,7 @@ export class Sentence extends Model {
   }
 
   static addOrder(query, storyId, order = 'oldest') {
-    let subquery
+    const subqueries = []
     switch (order) {
       case 'newest':
         query.orderBy('id', 'desc')
@@ -162,11 +156,20 @@ export class Sentence extends Model {
         break
       case 'score':
       default:
-        subquery = Point.query()
-          .count()
-          .as('score')
-          .where({ sentenceId: ref('sentences.id'), storyParentId: storyId })
-        query.select(subquery)
+        subqueries.push(
+          Point.query()
+            .countDistinct('userId')
+            .as('matchingScore')
+            .where({ sentenceId: ref('sentences.id'), storyParentId: storyId })
+        )
+        subqueries.push(
+          Point.query()
+            .countDistinct('userId')
+            .as('score')
+            .where({ sentenceId: ref('sentences.id') })
+        )
+        query.select(subqueries)
+        query.orderBy('matchingScore', 'desc')
         query.orderBy('score', 'desc')
         query.orderBy('id', 'asc')
         break
