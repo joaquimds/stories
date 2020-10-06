@@ -125,18 +125,35 @@ export class Sentence extends Model {
     return query.limit(limit)
   }
 
-  async createPoints(thread, userId, sourceId, type) {
-    const params = { userId, sourceId, type }
+  async createPoints(thread, userId, type) {
     const parents = await this.getParents(thread)
-    const points = []
     let sentenceId = this.id
     while (parents.length) {
       const parent = parents.pop()
       const storyParentId = parent.id
-      points.push({ sentenceId, storyParentId, ...params })
+      await Point.knex().raw(
+        `INSERT INTO points (sentence_id, story_parent_id, user_id, type) 
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT (sentence_id, story_parent_id, user_id, type) DO UPDATE SET count = points.count + 1`,
+        [sentenceId, storyParentId, userId, type]
+      )
       sentenceId = parent.ending.id
     }
-    await Point.query().insert(points)
+  }
+
+  async removePoints(thread, type, userIds) {
+    const parents = await this.getParents(thread)
+    let sentenceId = this.id
+    while (parents.length) {
+      const parent = parents.pop()
+      const storyParentId = parent.id
+      await Point.query()
+        .decrement('count', 1)
+        .whereIn('userId', userIds)
+        .andWhere({ type, sentenceId, storyParentId })
+      sentenceId = parent.ending.id
+    }
+    await Point.query().delete().where('count', '<=', 0)
   }
 
   getCreatedThread() {
@@ -158,15 +175,17 @@ export class Sentence extends Model {
       default:
         subqueries.push(
           Point.query()
-            .countDistinct('userId')
+            .count()
             .as('matchingScore')
             .where({ sentenceId: ref('sentences.id'), storyParentId: storyId })
+            .andWhere('count', '>', 0)
         )
         subqueries.push(
           Point.query()
             .countDistinct('userId')
             .as('score')
             .where({ sentenceId: ref('sentences.id') })
+            .andWhere('count', '>', 0)
         )
         query.select(subqueries)
         query.orderBy('matchingScore', 'desc')

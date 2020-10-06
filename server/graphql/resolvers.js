@@ -1,6 +1,5 @@
 import { raw, ref } from 'objection'
 import { Like } from '../models/Like'
-import { Point } from '../models/Point'
 import { Sentence } from '../models/Sentence'
 import { SentenceLink } from '../models/SentenceLink'
 import { Title } from '../models/Title'
@@ -307,7 +306,7 @@ export const resolvers = {
           authorId: user.id,
         })
         const thread = ending.getCreatedThread()
-        await ending.createPoints(thread, user.id, ending.id, 'WRITE')
+        await ending.createPoints(thread, user.id, 'WRITE')
         return { story: { id: printThread(thread), thread, ending } }
       } catch (e) {
         logger.error('%s %o %o', 'addSentenceMutation', args, e.message)
@@ -387,7 +386,6 @@ export const resolvers = {
       if (!user) {
         return { errorCode: 403 }
       }
-      const authorId = user.id
       try {
         const sentence = await Sentence.query()
           .findById(id)
@@ -395,18 +393,28 @@ export const resolvers = {
         if (!sentence) {
           return { errorCode: 404 }
         }
-        if (sentence.authorId !== authorId) {
+        if (sentence.authorId !== user.id) {
           return { errorCode: 403 }
         }
-        await Point.query()
-          .delete()
-          .where({ sourceId: sentence.id, type: 'WRITE' })
+        await sentence.removePoints(sentence.getCreatedThread(), 'WRITE', [
+          user.id,
+        ])
         const likes = await Like.query().where({ sentenceId: sentence.id })
-        const likeIds = likes.map((l) => l.id)
-        await Point.query()
-          .delete()
-          .whereIn('sourceId', likeIds)
-          .andWhere({ type: 'LIKE' })
+        const likeIds = []
+        const storyIds = {}
+        for (const like of likes) {
+          likeIds.push(like.id)
+          const userIds = storyIds[like.storyId] || []
+          userIds.push(like.userId)
+          storyIds[like.storyId] = userIds
+        }
+        for (const storyId of Object.keys(storyIds)) {
+          await sentence.removePoints(
+            parseThread(storyId),
+            'LIKE',
+            storyIds[storyId]
+          )
+        }
         if (sentence.children.length) {
           const updated = await Sentence.query().patchAndFetchById(id, {
             authorId: null,
@@ -451,12 +459,13 @@ export const resolvers = {
         const likes = await Like.query()
           .where('storyId', 'like', `%,${backlink.from}:${backlink.to}%`)
           .andWhere('storyId', '~', `,${backlink.from}:${backlink.to}(,.*)?$`)
-        const likeIds = likes.map((l) => l.id)
-        await Point.query()
-          .delete()
-          .whereIn('sourceId', likeIds)
-          .andWhere({ type: 'LIKE' })
-        await Like.query().delete().whereIn('id', likeIds)
+          .withGraphFetched('sentence')
+        for (const like of likes) {
+          await like.sentence.removePoints(parseThread(like.storyId), 'LIKE', [
+            like.userId,
+          ])
+          await Like.query().deleteById(like.id)
+        }
         await SentenceLink.query().deleteById(sentenceLink.id)
         return {}
       } catch (e) {
@@ -477,11 +486,11 @@ export const resolvers = {
         }
         const queryArgs = { storyId: id, userId: user.id }
         if (!isLike) {
-          const like = await Like.query().findOne(queryArgs)
+          const like = await Like.query()
+            .findOne(queryArgs)
+            .withGraphFetched('sentence')
           if (like) {
-            await Point.query()
-              .delete()
-              .where({ sourceId: like.id, type: 'LIKE' })
+            await like.sentence.removePoints(parseThread(id), 'LIKE', [user.id])
           }
           await Like.query().where(queryArgs).delete()
           return {}
@@ -490,11 +499,11 @@ export const resolvers = {
         if (existing) {
           return {}
         }
-        const like = await Like.query().insert({
+        await Like.query().insert({
           ...queryArgs,
           sentenceId: sentence.id,
         })
-        await sentence.createPoints(thread, user.id, like.id, 'LIKE')
+        await sentence.createPoints(thread, user.id, 'LIKE')
         return {}
       } catch (e) {
         logger.error('%s %o %o', 'likeStoryMutation', args, e.message)

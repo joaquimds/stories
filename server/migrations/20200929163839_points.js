@@ -4,9 +4,9 @@ exports.up = (knex) => {
     table.bigInteger('sentenceId').index().notNullable()
     table.text('storyParentId').index().notNullable()
     table.bigInteger('userId').index().notNullable()
-    table.bigInteger('sourceId').index().notNullable()
     table.string('type', 16).notNullable()
-    table.unique(['sentenceId', 'storyParentId', 'userId', 'sourceId', 'type'])
+    table.bigInteger('count').index().notNullable().defaultTo(1)
+    table.unique(['sentenceId', 'storyParentId', 'userId', 'type'])
   })
 }
 

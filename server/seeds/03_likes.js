@@ -11,49 +11,49 @@ exports.seed = async (knex) => {
   await knex('points').insert({
     sentenceId: 1,
     storyParentId: '0',
-    sourceId: 1,
+    count: 5,
     userId: 1,
     type: 'LIKE',
   })
   await knex('points').insert({
     sentenceId: 3,
     storyParentId: '1',
-    sourceId: 1,
+    count: 4,
     userId: 1,
     type: 'LIKE',
   })
   await knex('points').insert({
     sentenceId: 6,
     storyParentId: '3',
-    sourceId: 2,
+    count: 3,
     userId: 1,
     type: 'LIKE',
   })
   await knex('points').insert({
     sentenceId: 4,
     storyParentId: '1',
-    sourceId: 3,
+    count: 1,
     userId: 1,
     type: 'LIKE',
   })
   await knex('points').insert({
     sentenceId: 6,
     storyParentId: '4',
-    sourceId: 3,
+    count: 1,
     userId: 1,
     type: 'LIKE',
   })
   await knex('points').insert({
     sentenceId: 7,
     storyParentId: '6',
-    sourceId: 4,
+    count: 2,
     userId: 1,
     type: 'LIKE',
   })
   await knex('points').insert({
     sentenceId: 8,
     storyParentId: '7',
-    sourceId: 5,
+    count: 1,
     userId: 1,
     type: 'LIKE',
   })

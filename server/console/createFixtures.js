@@ -73,7 +73,7 @@ export const createFixtures = async () => {
         })
       }
       const thread = { end: child.id, backtrace: [] }
-      await child.createPoints(thread, author.id, child.id, 'WRITE')
+      await child.createPoints(thread, author.id, 'WRITE')
       parentId = child.id
       logger.info(`Created sentence ${child.content}`)
     }
