@@ -1,8 +1,10 @@
 import { logger } from '../services/logger'
 import { createFixtures } from './createFixtures'
+import { createMinimalFixtures } from './createMinimalFixtures'
 
 const commands = {
   createFixtures,
+  createMinimalFixtures,
 }
 
 export const runCommand = async (name, ...args) => {
