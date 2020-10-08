@@ -445,6 +445,7 @@ export const resolvers = {
         if (existing) {
           return { errorCode: 409 }
         }
+        await Title.query().delete().where({ storyId: id })
         await Title.query().insert({
           storyId: id,
           sentenceId: sentence.id,
