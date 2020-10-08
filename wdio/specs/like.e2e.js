@@ -1,9 +1,9 @@
 /* global describe, it, browser, expect */
 import config from '../../config'
 import { pageComponent } from '../components/page.component'
-import { fragmentsPage } from '../pages/fragments.page'
 import { loginPage } from '../pages/login.page'
-import { sentencePage } from '../pages/sentence.page'
+import { storyPage } from '../pages/story.page'
+import { storyListPage } from '../pages/storylist.page'
 
 describe('Like', () => {
   it('should login with valid credentials', () => {
@@ -12,7 +12,7 @@ describe('Like', () => {
     expect(browser).toHaveUrl(`${config.site.url}/`)
   })
   it('should like a story', () => {
-    sentencePage.sentences[0].click()
+    storyPage.sentences[0].click()
     expect(browser).toHaveUrl(`${config.site.url}/Beginning`)
     expect(pageComponent.likeButton).toBeExisting()
     pageComponent.likeButton.click()
@@ -23,13 +23,13 @@ describe('Like', () => {
     expect(pageComponent.unlikeButton).toBeExisting()
   })
   it('should show story in favourites', () => {
-    fragmentsPage.open('account/favourites')
+    storyListPage.open('account/favourites')
     expect(browser).toHaveUrl(`${config.site.url}/account/favourites`)
-    expect(fragmentsPage.loadMoreButton).toBeExisting()
-    expect(fragmentsPage.fragments[0]).toHaveText(
+    expect(storyListPage.loadMoreButton).toBeExisting()
+    expect(storyListPage.stories[0]).toHaveText(
       "The hills across the valley of the Ebro' were long and white."
     )
-    fragmentsPage.fragments[0].click()
+    storyListPage.stories[0].click()
   })
   it('should remove story from favourites', () => {
     expect(pageComponent.unlikeButton).toBeExisting()

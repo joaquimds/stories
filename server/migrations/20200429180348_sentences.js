@@ -12,6 +12,7 @@ exports.up = (knex) => {
       table.bigInteger('from').index().notNullable()
       table.bigInteger('to').index().notNullable()
       table.bigInteger('authorId').index()
+      table.boolean('deleted').defaultTo(false).notNullable()
       table.unique(['from', 'to'])
     })
 }

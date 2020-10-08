@@ -136,7 +136,7 @@ const createApolloClient = (initialState = {}, context = {}) => {
             merge: mergeStories,
           },
           otherSentences: {
-            keyArgs: ['search', 'from'],
+            keyArgs: ['search', 'from', 'direction'],
             merge: mergeSentences,
           },
         },

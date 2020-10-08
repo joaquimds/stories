@@ -5,9 +5,9 @@ import Page from './page'
 /**
  * sub page containing specific selectors and methods for a specific page
  */
-export default class SentencePage extends Page {
+export default class StoryPage extends Page {
   get sentences() {
-    return $$('[class^="Sentence_link__"]')
+    return $$('[class^="StoryLink_link__"]')
   }
 
   get loadMoreButton() {
@@ -27,4 +27,4 @@ export default class SentencePage extends Page {
   }
 }
 
-export const sentencePage = new SentencePage()
+export const storyPage = new StoryPage()

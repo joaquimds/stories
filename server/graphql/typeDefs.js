@@ -6,6 +6,11 @@ export const typeDefs = gql`
     newest
     score
   }
+  enum Direction {
+    parents
+    children
+    siblings
+  }
   type User {
     id: String!
     name: String!
@@ -14,6 +19,8 @@ export const typeDefs = gql`
     id: String!
     content: String!
     author: User
+    hasParent: Boolean
+    hasChild: Boolean
   }
   type Story {
     id: String!
@@ -42,7 +49,12 @@ export const typeDefs = gql`
     myStories(search: String, offset: Int): StoryList!
     myLinks(search: String, offset: Int): StoryList!
     likedStories(search: String, offset: Int): StoryList!
-    otherSentences(from: String!, search: String, offset: Int): SentenceList!
+    otherSentences(
+      from: String!
+      direction: Direction
+      search: String
+      offset: Int
+    ): SentenceList!
   }
   type Response {
     errorCode: Int
@@ -55,16 +67,32 @@ export const typeDefs = gql`
     errorCode: Int
     story: Story
   }
+  type LinkStoryResponse {
+    errorCode: Int
+    newStory: Story
+    id: String
+  }
+  type EditStoryResponse {
+    errorCode: Int
+    newStory: Story
+    storyParentId: String
+    completeStoryId: String
+  }
   type SentenceResponse {
     errorCode: Int
     sentence: Sentence
   }
   type Mutation {
     addSentenceMutation(content: String!, parentId: String!): StoryResponse
-    linkSentenceMutation(parentId: String!, childId: String!): StoryResponse
+    linkSentenceMutation(parentId: String!, childId: String!): LinkStoryResponse
     saveStoryMutation(id: String!, title: String!): SaveResponse
     deleteSentenceMutation(id: String!): SentenceResponse
     unlinkSentenceMutation(id: String!): Response
     likeStoryMutation(id: String!, like: Boolean!): Response
+    editStoryMutation(
+      id: String!
+      editedId: String!
+      content: String!
+    ): EditStoryResponse
   }
 `

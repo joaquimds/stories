@@ -88,7 +88,10 @@ export const resolvers = {
         query.andWhere('content', 'ilike', `%${escapedSearch}%`)
       }
       const countResult = await query.clone().count().first()
-      const sentences = await query.offset(offset).limit(LIMIT)
+      const sentences = await query
+        .orderBy('id', 'asc')
+        .offset(offset)
+        .limit(LIMIT)
       const stories = sentences.map((sentence) => {
         const thread = sentence.getCreatedThread()
         return {
@@ -119,6 +122,7 @@ export const resolvers = {
       const countResult = await query.clone().count().first()
       const sentences = await query
         .select('st.*', 'sentenceLinks.from', 'sentenceLinks.to')
+        .orderBy('sentenceLinks.id', 'asc')
         .offset(offset)
         .limit(LIMIT)
       const stories = sentences.map((sentence) => {
@@ -164,19 +168,58 @@ export const resolvers = {
         stories,
       }
     },
-    otherSentences: async (parent, { from, search, offset = 0 }) => {
+    otherSentences: async (p, { from, direction, search, offset = 0 }) => {
       const thread = parseThread(from)
-      const links = await SentenceLink.query()
-        .select('to')
-        .where({ from: thread.end })
-      const excluded = links.map((l) => l.to).concat(['0'])
-      const query = Sentence.query().whereNotIn('id', excluded)
       if (search) {
+        const query = Sentence.query().whereNot({ id: '0' })
         const escapedSearch = search.replace(/%/g, '\\%')
         query.andWhere('content', 'ilike', `%${escapedSearch}%`)
+        const countResult = await query.clone().count().first()
+        const sentences = await query
+          .orderBy('id', 'asc')
+          .offset(offset)
+          .limit(LIMIT)
+        return {
+          count: countResult.count,
+          sentences,
+        }
       }
-      const countResult = await query.clone().count().first()
-      const sentences = await query.offset(offset).limit(LIMIT)
+      let query
+      switch (direction) {
+        case 'parents':
+          query = Sentence.query()
+            .join('sentenceLinks as sl1', 'sentences.id', 'sl1.to')
+            .join('sentenceLinks as sl2', 'sl1.from', 'sl2.from')
+            .join('sentenceLinks as sl3', 'sl2.to', 'sl3.from')
+            .where('sentences.id', '!=', '0')
+            .andWhere('sl3.to', '=', thread.end)
+          break
+        case 'children':
+          query = Sentence.query()
+            .join('sentenceLinks as sl1', 'sentences.id', 'sl1.to')
+            .join('sentenceLinks as sl2', 'sl1.from', 'sl2.from')
+            .join('sentenceLinks as sl3', 'sl2.to', 'sl3.to')
+            .where('sentences.id', '!=', '0')
+            .andWhere('sl3.from', '=', thread.end)
+          break
+        case 'siblings':
+        default:
+          query = Sentence.query()
+            .join('sentenceLinks as sl1', 'sentences.id', 'sl1.to')
+            .join('sentenceLinks as sl2', 'sl1.from', 'sl2.from')
+            .where('sentences.id', '!=', '0')
+            .andWhere('sl2.to', '=', thread.end)
+          break
+      }
+      const countResult = await query
+        .clone()
+        .countDistinct('sentences.id')
+        .first()
+      const sentences = await query
+        .distinct('sentences.*')
+        .orderBy('sentences.id', 'asc')
+        .offset(offset)
+        .limit(LIMIT)
       return {
         count: countResult.count,
         sentences,
@@ -267,9 +310,11 @@ export const resolvers = {
           })
           .andWhereNot({ authorId: null })
           .first()
-        const isProtected = await sentenceLink.isProtected(id)
-        if (sentenceLink && !isProtected) {
-          return User.query().findById(sentenceLink.authorId)
+        if (sentenceLink) {
+          const isProtected = await sentenceLink.isProtected(id)
+          if (!isProtected) {
+            return User.query().findById(sentenceLink.authorId)
+          }
         }
       }
       return null
@@ -282,16 +327,26 @@ export const resolvers = {
       }
       return authorId ? content : '[deleted]'
     },
-    author: ({ authorId }, args, ctx) => {
+    author: (sentence, args, ctx) => {
+      const { authorId } = sentence
       return authorId ? ctx.dataLoaders.userLoader.load(authorId) : null
+    },
+    hasChild: ({ id }, args, ctx) => {
+      return ctx.dataLoaders.hasChildLoader.load(id)
+    },
+    hasParent: ({ id }, args, ctx) => {
+      return ctx.dataLoaders.hasParentLoader.load(id)
     },
   },
   Mutation: {
     addSentenceMutation: async (parent, args, { user }) => {
+      if (!user) {
+        return { errorCode: 403 }
+      }
       try {
         const content = args.content.trim().substring(0, 240)
         const parentId = args.parentId
-        if (!user || !content || !parentId) {
+        if (!content || !parentId) {
           return { errorCode: 400 }
         }
         const parentThread = parseThread(parentId)
@@ -322,19 +377,40 @@ export const resolvers = {
         const parentSentence = await Sentence.query().findOne({
           id: parentThread.end,
         })
-        if (!parentSentence) {
-          return { errorCode: 404 }
-        }
         const ending = await Sentence.query().findOne({
           id: childId,
         })
-        await SentenceLink.query().insert({
+        if (!parentSentence || !ending) {
+          return { errorCode: 404 }
+        }
+        const existingLink = await SentenceLink.query().findOne({
           from: parentSentence.id,
           to: ending.id,
-          authorId: user.id,
         })
-        const thread = addThreadStep(parentThread, ending.id, parentSentence.id)
-        return { story: { id: printThread(thread), thread, ending } }
+        let newLink = null
+        if (!existingLink) {
+          newLink = await SentenceLink.query().insert({
+            from: parentSentence.id,
+            to: ending.id,
+            authorId: user.id,
+          })
+        }
+        const defaultLink = await SentenceLink.query()
+          .findOne({
+            to: ending.id,
+          })
+          .orderBy('id', 'asc')
+        const thread = addThreadStep(
+          parentThread,
+          ending.id,
+          parentSentence.id,
+          defaultLink.from
+        )
+        const id = printThread(thread)
+        if (!newLink) {
+          return { id }
+        }
+        return { id, newStory: { id, thread, ending } }
       } catch (e) {
         logger.error(
           '%s %o %o',
@@ -507,6 +583,92 @@ export const resolvers = {
         return {}
       } catch (e) {
         logger.error('%s %o %o', 'likeStoryMutation', args, e.message)
+        return { errorCode: 500 }
+      }
+    },
+    editStoryMutation: async (parent, args, { user }) => {
+      if (!user) {
+        return { errorCode: 403 }
+      }
+      try {
+        const content = args.content.trim().substring(0, 240)
+        const storyId = args.id
+        const editedId = args.editedId
+        if (!content || !storyId || !editedId) {
+          return { errorCode: 400 }
+        }
+        const prevThread = parseThread(storyId)
+        const sentence = await Sentence.query().findById(prevThread.end)
+        if (!sentence) {
+          return { errorCode: 404 }
+        }
+        const parents = await sentence.getParents(prevThread)
+        const storyIds = parents.map((p) => p.id)
+        storyIds.push(storyId)
+        let parentId
+        let childId
+        let restIds
+        for (let i = 0; i < storyIds.length; ++i) {
+          if (storyIds[i] === editedId) {
+            parentId = storyIds[i - 1]
+            childId = storyIds[i]
+            restIds = storyIds.slice(i + 1)
+            break
+          }
+        }
+        const newChild = await Sentence.query().insert({
+          content,
+          storyParentId: parentId,
+          authorId: user.id,
+        })
+        const parentThread = parseThread(parentId)
+        await SentenceLink.query().insert({
+          from: parentThread.end,
+          to: newChild.id,
+          authorId: user.id,
+        })
+        const childThread = parseThread(childId)
+        const prevLinks = await SentenceLink.query().where({
+          from: childThread.end,
+        })
+        await SentenceLink.query().insert(
+          prevLinks.map((link) => ({
+            from: newChild.id,
+            to: link.to,
+            authorId: user.id,
+          }))
+        )
+        let thread = newChild.getCreatedThread()
+        await newChild.createPoints(thread, user.id, 'WRITE')
+        const newChildId = printThread(thread)
+
+        const response = {
+          newStory: { id: newChildId, thread, ending: newChild },
+        }
+
+        // Add backlink to new child
+        if (restIds.length) {
+          const nextId = restIds.shift()
+          const nextThread = parseThread(nextId)
+          thread = addThreadStep(thread, nextThread.end, newChild.id)
+        }
+        // Copy across the rest of the thread
+        while (restIds.length) {
+          const nextId = restIds.shift()
+          const nextThread = parseThread(nextId)
+          const [backlink] = nextThread.backtrace
+          if (backlink && backlink.from === nextThread.end) {
+            thread = addThreadStep(thread, nextThread.end, thread.end)
+          } else {
+            thread = { ...thread, end: nextThread.end }
+          }
+        }
+
+        response.storyParentId = parentId
+        response.completeStoryId = printThread(thread)
+        return response
+      } catch (e) {
+        logger.error('%s %o %o', 'editStoryMutation', args, e.message)
         return { errorCode: 500 }
       }
     },

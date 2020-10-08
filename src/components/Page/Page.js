@@ -4,13 +4,32 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import PropTypes from 'prop-types'
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { ERRORS } from '../../constants'
 import UserContext from '../../context/UserContext'
 import * as fragments from '../../graphql/fragments'
+import { addNewStory } from '../../graphql/updates'
 import styles from './Page.module.scss'
 
-const LIKE_SENTENCE_MUTATION = gql`
+const EDIT_STORY_MUTATION = gql`
+  mutation EditStoryMutation(
+    $id: String!
+    $editedId: String!
+    $content: String!
+  ) {
+    editStoryMutation(id: $id, editedId: $editedId, content: $content) {
+      newStory {
+        ...StoryFragment
+      }
+      storyParentId
+      completeStoryId
+      errorCode
+    }
+  }
+  ${fragments.story}
+`
+
+const LIKE_STORY_MUTATION = gql`
   mutation LikeStoryMutation($id: String!, $like: Boolean!) {
     likeStoryMutation(id: $id, like: $like) {
       errorCode
@@ -18,7 +37,7 @@ const LIKE_SENTENCE_MUTATION = gql`
   }
 `
 
-const SAVE_SENTENCE_MUTATION = gql`
+const SAVE_STORY_MUTATION = gql`
   mutation SaveStoryMutation($id: String!, $title: String!) {
     saveStoryMutation(id: $id, title: $title) {
       errorCode
@@ -56,8 +75,15 @@ const Page = ({ story }) => {
   const [isReported, setReported] = useState(false)
   const [error, setError] = useState(null)
   const [title, setTitle] = useState('')
+  const [focus, setFocus] = useState(null)
+  const [editing, setEditing] = useState(null)
+  const [editedContent, setEditedContent] = useState('')
 
   const { parents, ending } = story
+
+  useEffect(() => {
+    setFocus(null)
+  }, [story.id])
 
   const [deleteSentence, { loading }] = useMutation(DELETE_SENTENCE_MUTATION, {
     variables: { id: story.ending.id },
@@ -70,13 +96,11 @@ const Page = ({ story }) => {
     }
   )
 
-  const [saveSentence, { loading: saveLoading }] = useMutation(
-    SAVE_SENTENCE_MUTATION
-  )
+  const [editStory, { loading: editLoading }] = useMutation(EDIT_STORY_MUTATION)
 
-  const [likeSentence, { loading: likeLoading }] = useMutation(
-    LIKE_SENTENCE_MUTATION
-  )
+  const [saveStory, { loading: saveLoading }] = useMutation(SAVE_STORY_MUTATION)
+
+  const [likeStory, { loading: likeLoading }] = useMutation(LIKE_STORY_MUTATION)
 
   const isAuthor = user && ending.author && ending.author.id === user.id
   const isLinkAuthor =
@@ -85,9 +109,35 @@ const Page = ({ story }) => {
     setError(ERRORS[errorCode] || `Unknown error ${errorCode}`)
   }
 
+  const onSubmitEdit = async (e) => {
+    e.preventDefault()
+    await editStory({
+      variables: { id: story.id, editedId: editing, content: editedContent },
+      async update(
+        cache,
+        {
+          data: {
+            editStoryMutation: {
+              errorCode,
+              newStory,
+              storyParentId,
+              completeStoryId,
+            },
+          },
+        }
+      ) {
+        if (errorCode) {
+          return setErrorFromCode(errorCode)
+        }
+        await router.push('/[slug]', `/${completeStoryId}`)
+        addNewStory(cache, storyParentId, newStory)
+      },
+    })
+  }
+
   const onSubmitSave = async (e) => {
     e.preventDefault()
-    await saveSentence({
+    await saveStory({
       variables: { id: story.id, title },
       update(
         cache,
@@ -167,7 +217,7 @@ const Page = ({ story }) => {
   }
 
   const onClickLike = async () => {
-    await likeSentence({
+    await likeStory({
       variables: {
         id: story.id,
         like: !story.liked,
@@ -220,8 +270,9 @@ const Page = ({ story }) => {
     }
   }
 
-  const sentences = parents.map(({ ending }) => ending)
-  sentences.push(ending)
+  const [, ...linkableParents] = story.parents
+  const stories = [...linkableParents, { id: story.id, ending }]
+  const sentences = stories.map(({ ending }) => ending)
 
   const firstSentence = sentences.filter(({ content, author }) => {
     return content && author
@@ -233,7 +284,6 @@ const Page = ({ story }) => {
     firstSentence && firstSentence.content
       ? firstSentence.content
       : process.env.description
-  const linkableParents = parents.filter((p) => p.ending.content)
 
   return (
     <>
@@ -258,14 +308,66 @@ const Page = ({ story }) => {
         />
       </Head>
       {story.title ? <h1>{story.title}</h1> : null}
-      {linkableParents.map((p) => (
-        <p key={p.id} className={styles.content}>
-          <Link href="/[slug]" as={p.permalink}>
-            <a>{p.ending.content}</a>
-          </Link>{' '}
-        </p>
+      {stories.map((p) => (
+        <div key={p.id} className={styles.content}>
+          {editing === p.id ? (
+            <form className={styles.editing} onSubmit={onSubmitEdit}>
+              <textarea
+                value={editedContent}
+                maxLength={280}
+                onChange={(e) => setEditedContent(e.target.value)}
+              />
+              <div className={styles['edit-actions']}>
+                <button
+                  className={`${styles['edit-save']} link`}
+                  disabled={editLoading}
+                >
+                  save
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.delete} link`}
+                  onClick={() => setEditing(null)}
+                >
+                  cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={`${styles.sentence} link`}
+                onClick={() => setFocus(focus === p.id ? null : p.id)}
+              >
+                {p.ending.content}
+              </button>
+              {focus === p.id ? (
+                <div className={styles['sentence-actions']}>
+                  {p.id !== story.id ? (
+                    <Link href="/[slug]" as={p.permalink}>
+                      <a className={styles.view}>view</a>
+                    </Link>
+                  ) : null}
+                  {user ? (
+                    <button
+                      className={`${styles.edit} link`}
+                      type="button"
+                      disabled={editLoading}
+                      onClick={() => {
+                        setEditing(p.id)
+                        setEditedContent(p.ending.content)
+                      }}
+                    >
+                      rewrite
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
       ))}
-      <p className={styles.content}>{ending.content}</p>
       {renderAuthors(sentences)}
       {isReported ? (
         <p className={styles.reported}>reported</p>

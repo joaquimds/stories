@@ -1,4 +1,4 @@
-import { Model, ref } from 'objection'
+import { Model, ref, raw } from 'objection'
 import { parseThread, printThread } from '../util/threads'
 import { Point } from './Point'
 import { SentenceLink } from './SentenceLink'
@@ -128,16 +128,32 @@ export class Sentence extends Model {
   async createPoints(thread, userId, type) {
     const parents = await this.getParents(thread)
     let sentenceId = this.id
+    const chunks = []
+    let points = []
     while (parents.length) {
       const parent = parents.pop()
       const storyParentId = parent.id
+      points.push([sentenceId, storyParentId, userId, type])
+      if (points.length === 100) {
+        chunks.push(points)
+        points = []
+      }
+      sentenceId = parent.ending.id
+    }
+    if (points.length) {
+      chunks.push(points)
+    }
+    for (const chunk of chunks) {
+      const args = chunk.reduce((arr, point) => arr.concat(point), [])
+      const placeholder = Array.from({ length: chunk.length })
+        .map(() => '(?,?,?,?)')
+        .join(', ')
       await Point.knex().raw(
         `INSERT INTO points (sentence_id, story_parent_id, user_id, type) 
-        VALUES (?, ?, ?, ?)
+        VALUES ${placeholder}
         ON CONFLICT (sentence_id, story_parent_id, user_id, type) DO UPDATE SET count = points.count + 1`,
-        [sentenceId, storyParentId, userId, type]
+        args
       )
-      sentenceId = parent.ending.id
     }
   }
 
@@ -148,12 +164,11 @@ export class Sentence extends Model {
       const parent = parents.pop()
       const storyParentId = parent.id
       await Point.query()
-        .decrement('count', 1)
+        .patch({ count: raw('greatest(0, count - 1)') })
         .whereIn('userId', userIds)
         .andWhere({ type, sentenceId, storyParentId })
       sentenceId = parent.ending.id
     }
-    await Point.query().delete().where('count', '<=', 0)
   }
 
   getCreatedThread() {

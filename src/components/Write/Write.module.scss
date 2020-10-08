@@ -58,10 +58,6 @@
   li:not(:last-child) {
     margin-bottom: spacing(1);
   }
-
-  button {
-    text-align: left;
-  }
 }
 
 .results {
@@ -69,9 +65,31 @@
   overflow: auto;
   @include desktop {
     height: auto;
+    overflow: visible;
   }
 }
 
-.load-more {
+.link-actions {
+  @include card;
+
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding: spacing(1) spacing(2);
+}
+
+.view-parents {
+  color: color(blue);
+}
+
+.link {
+  margin: spacing(0) 0;
+}
+
+.view-children {
+  color: color(blue);
+}
+
+.load-more,.no-results {
   text-align: center;
 }

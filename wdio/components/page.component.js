@@ -6,6 +6,9 @@ export default class PageComponent extends Component {
   get content() {
     return $$('[class^="Page_content__"]')
   }
+  get viewLink() {
+    return $('[class^="Page_view__"]')
+  }
   get deleteButton() {
     return $('[class*="Page_delete__"]')
   }

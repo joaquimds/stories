@@ -89,13 +89,19 @@ const StoryTree = ({ slug }) => {
                   ))}
                 </div>
               ) : null}
-              <ul className={styles.children}>
-                {children.map((c) => (
-                  <li key={c.id}>
-                    <StoryLink story={c} />
-                  </li>
-                ))}
-              </ul>
+              {children.length ? (
+                <ul className={styles.children}>
+                  {children.map((c) => (
+                    <li key={c.id}>
+                      <StoryLink story={c} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.end}>
+                  {"(tale's end. write more or link to another)"}
+                </p>
+              )}
               {children.length < childCount ? (
                 <div className={styles['load-more']}>
                   <button

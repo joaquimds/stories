@@ -1,6 +1,5 @@
 exports.seed = async (knex) => {
   await knex('likes').truncate()
-  await knex('points').truncate()
   await knex('likes').insert([
     { storyId: '3', sentenceId: 3, userId: 1 },
     { storyId: '6', sentenceId: 6, userId: 1 },

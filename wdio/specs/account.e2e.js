@@ -4,6 +4,7 @@ import { accountPage } from '../pages/account.page'
 import { authenticatedPage } from '../pages/authenticated.page'
 import { fragmentsPage } from '../pages/fragments.page'
 import { loginPage } from '../pages/login.page'
+import { storyListPage } from '../pages/storylist.page'
 
 describe('Account', () => {
   it('should login with valid credentials', () => {
@@ -30,11 +31,11 @@ describe('Account', () => {
   it('should view favourites', () => {
     accountPage.favouritesLink.click()
     expect(browser).toHaveUrl(`${config.site.url}/account/favourites`)
-    expect(fragmentsPage.loadMoreButton).toBeExisting()
-    expect(fragmentsPage.fragments).toHaveLength(3)
-    fragmentsPage.loadMoreButton.click()
-    expect(fragmentsPage.loadMoreButton).not.toBeExisting()
-    expect(fragmentsPage.fragments).toHaveLength(4)
+    expect(storyListPage.loadMoreButton).toBeExisting()
+    expect(storyListPage.stories).toHaveLength(3)
+    storyListPage.loadMoreButton.click()
+    expect(storyListPage.loadMoreButton).not.toBeExisting()
+    expect(storyListPage.stories).toHaveLength(5)
     browser.back()
   })
   it('should log out', () => {

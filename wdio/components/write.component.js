@@ -4,10 +4,10 @@ import Component from './component'
 
 export default class WriteComponent extends Component {
   get input() {
-    return $('form[class^="Write_write__"] textarea')
+    return $('[class^="Write_write__"] form textarea')
   }
   get submit() {
-    return $('form[class^="Write_write__"] button')
+    return $('[class^="Write_write__"] form button')
   }
 }
 

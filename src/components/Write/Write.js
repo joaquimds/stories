@@ -3,10 +3,11 @@ import gql from 'graphql-tag'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import PropTypes from 'prop-types'
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { ERRORS } from '../../constants'
 import UserContext from '../../context/UserContext'
 import * as fragments from '../../graphql/fragments'
+import { addNewStory } from '../../graphql/updates'
 import styles from './Write.module.scss'
 
 const ADD_SENTENCE_MUTATION = gql`
@@ -25,7 +26,8 @@ const LINK_SENTENCE_MUTATION = gql`
   mutation LinkSentenceMutation($parentId: String!, $childId: String!) {
     linkSentenceMutation(parentId: $parentId, childId: $childId) {
       errorCode
-      story {
+      id
+      newStory {
         ...StoryFragment
       }
     }
@@ -34,11 +36,23 @@ const LINK_SENTENCE_MUTATION = gql`
 `
 
 const OTHER_SENTENCES_QUERY = gql`
-  query OtherSentences($from: String!, $search: String, $offset: Int) {
-    otherSentences(from: $from, search: $search, offset: $offset) {
+  query OtherSentences(
+    $from: String!
+    $direction: Direction
+    $search: String
+    $offset: Int
+  ) {
+    otherSentences(
+      from: $from
+      direction: $direction
+      search: $search
+      offset: $offset
+    ) {
       count
       sentences {
         ...SentenceFragment
+        hasParent
+        hasChild
       }
     }
   }
@@ -52,13 +66,25 @@ const Write = ({ parentId }) => {
   const [content, setContent] = useState('')
   const [search, setSearch] = useState('')
   const [error, setError] = useState(null)
+  const [otherQueryParams, setOtherQueryParams] = useState({
+    from: parentId,
+    direction: 'siblings',
+    search: null,
+  })
+  useEffect(() => {
+    setWriting(true)
+    setOtherQueryParams({
+      from: parentId,
+      direction: 'siblings',
+      search: null,
+    })
+  }, [parentId])
   const { loading: searchLoading, data, fetchMore } = useQuery(
     OTHER_SENTENCES_QUERY,
     {
       skip: isWriting,
       variables: {
-        from: parentId,
-        search,
+        ...otherQueryParams,
       },
     }
   )
@@ -91,7 +117,7 @@ const Write = ({ parentId }) => {
         }
         setContent('')
         await router.push('/[slug]', `/${newStory.id}`)
-        updateCache(cache, parentId, newStory, false)
+        addNewStory(cache, parentId, newStory)
       },
     })
   }
@@ -106,15 +132,17 @@ const Write = ({ parentId }) => {
         cache,
         {
           data: {
-            linkSentenceMutation: { errorCode, story: newStory },
+            linkSentenceMutation: { errorCode, id, newStory },
           },
         }
       ) {
         if (errorCode) {
           return setErrorFromCode(errorCode)
         }
-        await router.push('/[slug]', `/${newStory.id}`)
-        updateCache(cache, parentId, newStory, true)
+        await router.push('/[slug]', `/${id}`)
+        if (newStory) {
+          addNewStory(cache, parentId, newStory)
+        }
       },
     })
   }
@@ -179,22 +207,56 @@ const Write = ({ parentId }) => {
             type="text"
             placeholder="Search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setOtherQueryParams({
+                ...otherQueryParams,
+                search: e.target.value,
+              })
+            }}
           />
           <div className={styles.results}>
             {searchLoading ? (
-              <p>loading...</p>
+              <p className={styles['no-results']}>(loading)</p>
             ) : otherSentences.length ? (
               <ul>
                 {otherSentences.map((r) => (
-                  <li key={r.id}>
+                  <li key={r.id} className={styles['link-actions']}>
                     <button
-                      className="link"
                       type="button"
-                      onClick={() => onClickChild(r.id)}
+                      className={`link ${styles['view-parents']}`}
+                      disabled={!r.hasParent}
+                      onClick={() =>
+                        setOtherQueryParams({
+                          from: r.id,
+                          direction: 'parents',
+                          search: null,
+                        })
+                      }
+                    >
+                      back ↑
+                    </button>
+                    <button
+                      className={`link ${styles.link}`}
+                      type="button"
                       disabled={loadingLink}
+                      onClick={() => onClickChild(r.id)}
                     >
                       {r.content}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!r.hasChild}
+                      className={`link ${styles['view-children']}`}
+                      onClick={() =>
+                        setOtherQueryParams({
+                          from: r.id,
+                          direction: 'children',
+                          search: null,
+                        })
+                      }
+                    >
+                      forward ↓
                     </button>
                   </li>
                 ))}
@@ -211,62 +273,13 @@ const Write = ({ parentId }) => {
                 ) : null}
               </ul>
             ) : (
-              <p>no results</p>
+              <p className={styles['no-results']}>no results</p>
             )}
           </div>
         </div>
       )}
     </div>
   )
-}
-
-const updateCache = (cache, storyParentId, newStory) => {
-  const [end, backlink] = newStory.id.split(',')
-  const isLink = backlink && end === backlink.split(':')[0]
-
-  const sentenceParentId = storyParentId.split(',')[0]
-  const storyParentRegex = new RegExp(`^Story:${sentenceParentId},?`)
-  const storyParentIds = Object.keys(cache.data.data)
-    .filter((k) => storyParentRegex.test(k))
-    .map((k) => k.split('Story:')[1])
-
-  for (const storyId of storyParentIds) {
-    const [end, ...backtrace] = storyId.split(',')
-    if (isLink) {
-      backtrace.unshift(`${newStory.ending.id}:${end}`)
-    }
-    const id = [newStory.ending.id, ...backtrace].join(',')
-    const newStoryRef = cache.writeFragment({
-      data: { ...newStory, id, permalink: `/${id}` },
-      fragment: fragments.story,
-      fragmentName: 'StoryFragment',
-    })
-    cache.modify({
-      id: `Story:${storyId}`,
-      fields: {
-        childCount(count) {
-          return count && count > 0 ? count + 1 : 1
-        },
-        children(childRefs) {
-          return [...childRefs, newStoryRef]
-        },
-      },
-    })
-  }
-  cache.modify({
-    id: 'ROOT_QUERY',
-    fields: {
-      myStories({ DELETE }) {
-        return DELETE
-      },
-      myLinks({ DELETE }) {
-        return DELETE
-      },
-      otherSentences({ DELETE }) {
-        return DELETE
-      },
-    },
-  })
 }
 
 Write.propTypes = {

@@ -4,6 +4,7 @@ exports.seed = async (knex) => {
   await knex('sentences').truncate()
   await knex('sentence_links').truncate()
   await knex('titles').truncate()
+  await knex('points').truncate()
   await knex('sentences').insert({
     id: 0,
     content: '',
