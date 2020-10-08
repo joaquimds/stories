@@ -4,9 +4,9 @@ require('@babel/register')
 const program = require('commander')
 const { runCommand, knex, client } = require('../server')
 
-program
-  .command('fixtures:create')
-  .action((username, password) => run('createFixtures', username, password))
+program.command('fixtures:create').action(() => run('createFixtures'))
+
+program.command('fixtures:minimal').action(() => run('createMinimalFixtures'))
 
 async function run(name, ...args) {
   await runCommand(name, ...args)
