@@ -358,7 +358,6 @@ export const resolvers = {
         await SentenceLink.query().insert({
           from: parentThread.end,
           to: ending.id,
-          authorId: user.id,
         })
         const thread = ending.getCreatedThread()
         await ending.createPoints(thread, user.id, 'WRITE')
