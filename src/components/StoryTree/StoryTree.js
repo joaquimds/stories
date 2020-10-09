@@ -99,7 +99,9 @@ const StoryTree = ({ slug }) => {
                 </ul>
               ) : (
                 <p className={styles.end}>
-                  {"(tale's end. write more or link to another)"}
+                  {slug !== '0'
+                    ? "(tale's end. write more or link to another)"
+                    : null}
                 </p>
               )}
               {children.length < childCount ? (
