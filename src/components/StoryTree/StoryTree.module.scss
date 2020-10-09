@@ -81,11 +81,7 @@
 .children {
   display: flex;
   flex-direction: column;
-  margin: 0 0 spacing(2) 0;
-
-  @include desktop {
-    margin-top: auto;
-  }
+  margin: auto 0 spacing(2) 0;
 
   &:last-child {
     margin-bottom: 0;

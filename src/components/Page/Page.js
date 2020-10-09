@@ -322,7 +322,7 @@ const Page = ({ story }) => {
                   className={`${styles['edit-save']} link`}
                   disabled={editLoading}
                 >
-                  save
+                  save new tale
                 </button>
                 <button
                   type="button"
