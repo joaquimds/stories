@@ -1,4 +1,4 @@
-import { constants, email } from '../../config'
+import { constants } from '../../config'
 import { Sentence } from '../models/Sentence'
 import { SentenceLink } from '../models/SentenceLink'
 import { Title } from '../models/Title'
@@ -36,12 +36,12 @@ export const createFixtures = async () => {
   })
   const passwordHash = await hash(constants.initialAdminPassword)
   await User.query().insert({
-    email: email.user,
+    email: constants.adminEmail,
     name: 'Admin',
     passwordHash,
   })
   for (const story of STORIES) {
-    const [emailName, emailHost] = email.user.split('@')
+    const [emailName, emailHost] = constants.adminEmail.split('@')
     const author = await User.query().insertAndFetch({
       email: `${emailName}+${slugify(story.author)}@${emailHost}`,
       name: story.author,

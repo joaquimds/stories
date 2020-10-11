@@ -1,4 +1,4 @@
-import { constants, email } from '../../config'
+import { constants } from '../../config'
 import { Sentence } from '../models/Sentence'
 import { User } from '../models/User'
 import { hash } from '../services/bcrypt'
@@ -11,7 +11,7 @@ export const createMinimalFixtures = async () => {
   })
   const passwordHash = await hash(constants.initialAdminPassword)
   await User.query().insert({
-    email: email.user,
+    email: constants.adminEmail,
     name: 'Admin',
     passwordHash,
   })
