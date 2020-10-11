@@ -13,8 +13,12 @@ export class Sentence extends Model {
       relation: Model.ManyToManyRelation,
       modelClass: Sentence,
       join: {
-        from: 'sentenceLinks.to',
-        to: 'sentenceLinks.from',
+        from: 'sentences.id',
+        through: {
+          from: 'sentenceLinks.to',
+          to: 'sentenceLinks.from',
+        },
+        to: 'sentences.id',
       },
     },
     children: {
@@ -103,9 +107,12 @@ export class Sentence extends Model {
   }
 
   async countChildren() {
-    const countQuery = await SentenceLink.query()
-      .findOne({ from: this.id })
+    const countQuery = await Sentence.query()
+      .join('sentenceLinks', 'sentenceLinks.to', 'sentences.id')
+      .where('sentenceLinks.from', '=', this.id)
+      .andWhereRaw('sentences.author_id is not null')
       .count()
+      .first()
     return Number(countQuery.count)
   }
 
@@ -121,6 +128,7 @@ export class Sentence extends Model {
       .join('sentenceLinks', 'sentenceLinks.to', 'sentences.id')
       .whereNotIn('sentences.id', exclude)
       .andWhere('sentenceLinks.from', '=', this.id)
+      .andWhereRaw('sentences.author_id is not null')
     Sentence.addOrder(query, storyId, order)
     return query.limit(limit)
   }

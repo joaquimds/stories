@@ -320,9 +320,9 @@ const Page = ({ story }) => {
               <div className={styles['edit-actions']}>
                 <button
                   className={`${styles['edit-save']} link`}
-                  disabled={editLoading}
+                  disabled={editLoading || editedContent === p.ending.content}
                 >
-                  save new tale
+                  save new branch
                 </button>
                 <button
                   type="button"
@@ -335,13 +335,21 @@ const Page = ({ story }) => {
             </form>
           ) : (
             <>
-              <button
-                type="button"
-                className={`${styles.sentence} link`}
-                onClick={() => setFocus(focus === p.id ? null : p.id)}
-              >
-                {p.ending.content}
-              </button>
+              {user ? (
+                <button
+                  type="button"
+                  className={`${styles.sentence} link`}
+                  onClick={() => setFocus(focus === p.id ? null : p.id)}
+                >
+                  {p.ending.content}
+                </button>
+              ) : p.id === story.id ? (
+                <span className={styles.sentence}>{p.ending.content}</span>
+              ) : (
+                <Link href="/[slug]" as={p.permalink}>
+                  <a className={styles.sentence}>{p.ending.content}</a>
+                </Link>
+              )}
               {focus === p.id ? (
                 <div className={styles['sentence-actions']}>
                   {p.id !== story.id ? (
@@ -359,7 +367,7 @@ const Page = ({ story }) => {
                         setEditedContent(p.ending.content)
                       }}
                     >
-                      rewrite
+                      write alternative branch
                     </button>
                   ) : null}
                 </div>

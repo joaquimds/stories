@@ -492,10 +492,19 @@ export const resolvers = {
           )
         }
         if (sentence.children.length) {
-          const updated = await Sentence.query().patchAndFetchById(id, {
+          await Sentence.query().patchAndFetchById(id, {
             authorId: null,
           })
-          return { sentence: updated }
+          const links = await SentenceLink.query().where({ to: id })
+          for (const link of links) {
+            for (const child of sentence.children) {
+              await SentenceLink.query().insert({
+                from: link.from,
+                to: child.id,
+              })
+            }
+          }
+          return {}
         }
         await Like.query().delete().whereIn('id', likeIds)
         await Title.query().delete().where({ sentenceId: id })
