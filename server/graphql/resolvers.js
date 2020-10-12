@@ -611,6 +611,18 @@ export const resolvers = {
         if (!sentence) {
           return { errorCode: 404 }
         }
+        if (!args.createNewBranch && sentence.authorId === user.id) {
+          const editedThread = parseThread(editedId)
+          const updated = await Sentence.query().patchAndFetchById(
+            editedThread.end,
+            {
+              content,
+            }
+          )
+          return {
+            newStory: { id: editedId, thread: editedThread, ending: updated },
+          }
+        }
         const parents = await sentence.getParents(prevThread)
         const storyIds = parents.map((p) => p.id)
         storyIds.push(storyId)
@@ -628,23 +640,12 @@ export const resolvers = {
         if (!parentId || !childId) {
           return { errorCode: 404 }
         }
-        const childThread = parseThread(childId)
-        if (!args.createNewBranch && sentence.authorId === user.id) {
-          const updated = await Sentence.query().patchAndFetchById(
-            childThread.end,
-            {
-              content,
-            }
-          )
-          return {
-            newStory: { id: childId, thread: childThread, ending: updated },
-          }
-        }
         const newChild = await Sentence.query().insert({
           content,
           storyParentId: parentId,
           authorId: user.id,
         })
+        const childThread = parseThread(childId)
         const parentThread = parseThread(parentId)
         await SentenceLink.query().insert({
           from: parentThread.end,
