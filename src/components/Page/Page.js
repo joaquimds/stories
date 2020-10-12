@@ -16,8 +16,14 @@ const EDIT_STORY_MUTATION = gql`
     $id: String!
     $editedId: String!
     $content: String!
+    $createNewBranch: Boolean!
   ) {
-    editStoryMutation(id: $id, editedId: $editedId, content: $content) {
+    editStoryMutation(
+      id: $id
+      editedId: $editedId
+      content: $content
+      createNewBranch: $createNewBranch
+    ) {
       newStory {
         ...StoryFragment
       }
@@ -76,6 +82,7 @@ const Page = ({ story }) => {
   const [error, setError] = useState(null)
   const [title, setTitle] = useState('')
   const [focus, setFocus] = useState(null)
+  const [isRewriting, setRewriting] = useState(false)
   const [editing, setEditing] = useState(null)
   const [editedContent, setEditedContent] = useState('')
 
@@ -112,7 +119,12 @@ const Page = ({ story }) => {
   const onSubmitEdit = async (e) => {
     e.preventDefault()
     await editStory({
-      variables: { id: story.id, editedId: editing, content: editedContent },
+      variables: {
+        id: story.id,
+        editedId: editing,
+        content: editedContent,
+        createNewBranch: isRewriting,
+      },
       async update(
         cache,
         {
@@ -129,8 +141,12 @@ const Page = ({ story }) => {
         if (errorCode) {
           return setErrorFromCode(errorCode)
         }
-        await router.push('/[slug]', `/${completeStoryId}`)
-        addNewStory(cache, storyParentId, newStory)
+        if (completeStoryId) {
+          await router.push('/[slug]', `/${completeStoryId}`)
+          addNewStory(cache, storyParentId, newStory)
+        }
+        setFocus(null)
+        setEditing(null)
       },
     })
   }
@@ -322,7 +338,7 @@ const Page = ({ story }) => {
                   className={`${styles['edit-save']} link`}
                   disabled={editLoading || editedContent === p.ending.content}
                 >
-                  save new branch
+                  {isRewriting ? 'save new branch' : 'save'}
                 </button>
                 <button
                   type="button"
@@ -357,12 +373,27 @@ const Page = ({ story }) => {
                       <a className={styles.view}>view</a>
                     </Link>
                   ) : null}
-                  {user ? (
+                  {isAuthor ? (
                     <button
                       className={`${styles.edit} link`}
                       type="button"
                       disabled={editLoading}
                       onClick={() => {
+                        setRewriting(false)
+                        setEditing(p.id)
+                        setEditedContent(p.ending.content)
+                      }}
+                    >
+                      edit
+                    </button>
+                  ) : null}
+                  {user ? (
+                    <button
+                      className={`${styles.rewrite} link`}
+                      type="button"
+                      disabled={editLoading}
+                      onClick={() => {
+                        setRewriting(true)
                         setEditing(p.id)
                         setEditedContent(p.ending.content)
                       }}

@@ -15,13 +15,18 @@
   margin-top: spacing(0);
 }
 
-.edit {
-  color: color(green);
-}
-
 .view {
   color: color(blue);
   margin-right: spacing(1);
+}
+
+.edit {
+  color: color(red);
+  margin-right: spacing(1);
+}
+
+.rewrite {
+  color: color(green);
 }
 
 .editing {

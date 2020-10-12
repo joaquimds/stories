@@ -93,6 +93,7 @@ export const typeDefs = gql`
       id: String!
       editedId: String!
       content: String!
+      createNewBranch: Boolean!
     ): EditStoryResponse
   }
 `
