@@ -344,7 +344,7 @@ export const resolvers = {
         return { errorCode: 403 }
       }
       try {
-        const content = args.content.trim().substring(0, 240)
+        const content = args.content.trim().substring(0, 280)
         const parentId = args.parentId
         if (!content || !parentId) {
           return { errorCode: 400 }
@@ -600,7 +600,7 @@ export const resolvers = {
         return { errorCode: 403 }
       }
       try {
-        const content = args.content.trim().substring(0, 240)
+        const content = args.content.trim().substring(0, 280)
         const storyId = args.id
         const editedId = args.editedId
         if (!content || !storyId || !editedId) {
