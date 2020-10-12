@@ -234,7 +234,7 @@ const Write = ({ parentId }) => {
                         })
                       }
                     >
-                      back ↑
+                      trace back ↑
                     </button>
                     <button
                       className={`link ${styles.link}`}
@@ -242,7 +242,7 @@ const Write = ({ parentId }) => {
                       disabled={loadingLink}
                       onClick={() => onClickChild(r.id)}
                     >
-                      {r.content}
+                      → {r.content}
                     </button>
                     <button
                       type="button"
@@ -256,7 +256,7 @@ const Write = ({ parentId }) => {
                         })
                       }
                     >
-                      forward ↓
+                      check ahead ↓
                     </button>
                   </li>
                 ))}
