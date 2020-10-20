@@ -308,7 +308,7 @@ const Page = ({ story }) => {
         <meta
           key="og:url"
           property="og:url"
-          content={`${process.env.siteUrl}${story.id}`}
+          content={`${process.env.siteUrl}${story.permalink}`}
         />
         <meta key="og:title" property="og:title" content={metaTitle} />
         <meta
@@ -539,6 +539,7 @@ const renderAuthors = (sentences) => {
 Page.propTypes = {
   story: PropTypes.shape({
     id: PropTypes.string,
+    permalink: PropTypes.string,
     title: PropTypes.string,
     linkAuthor: PropTypes.shape({
       id: PropTypes.string,

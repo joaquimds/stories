@@ -146,7 +146,7 @@ StoryTree.propTypes = {
 StoryTree.query = gql`
   query Story($slug: String!, $order: Order, $exclude: [String]) {
     story(slug: $slug) {
-      id
+      ...StoryFragment
       title
       liked
       linkAuthor {
@@ -155,9 +155,6 @@ StoryTree.query = gql`
       }
       parents {
         ...StoryFragment
-      }
-      ending {
-        ...SentenceFragment
       }
       childCount
       children(order: $order, exclude: $exclude) {
