@@ -19,6 +19,7 @@ export class SentenceLink extends Model {
     const scoreResult = await Point.query()
       .count()
       .where({ storyParentId: storyId })
+      .andWhere('count', '>', 0)
       .andWhere((qb) => {
         qb.where((qb) => {
           qb.where({ type: 'LIKE' }).andWhereNot({ userId: this.authorId })

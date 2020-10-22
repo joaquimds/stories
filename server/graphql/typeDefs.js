@@ -19,6 +19,7 @@ export const typeDefs = gql`
     id: String!
     content: String!
     author: User
+    editable: Boolean!
     hasParent: Boolean
     hasChild: Boolean
   }

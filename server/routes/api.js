@@ -13,7 +13,7 @@ router.put('/api/register', async (req, res) => {
   try {
     const name = getFromBody(req.body, 'name')
     const email = getFromBody(req.body, 'email')
-    const password = req.body.password
+    const { isNotifiable, password } = req.body
     if (!email || !name || !password) {
       return res.sendStatus(400)
     }
@@ -29,6 +29,7 @@ router.put('/api/register', async (req, res) => {
       name,
       passwordHash,
       email,
+      isNotifiable,
     })
     req.login(user, () => res.sendStatus(200))
   } catch (e) {
@@ -39,6 +40,20 @@ router.put('/api/register', async (req, res) => {
 
 router.post('/api/login', passport.authenticate('local'), (req, res) => {
   res.sendStatus(200)
+})
+
+router.put('/api/me', async (req, res) => {
+  if (!req.user) {
+    return res.sendStatus(403)
+  }
+  const { isNotifiable } = req.body
+  try {
+    await User.query().patch({ isNotifiable }).where({ id: req.user.id })
+    res.sendStatus(200)
+  } catch (e) {
+    logger.error(e.message)
+    req.sendStatus(500)
+  }
 })
 
 router.post('/api/logout', (req, res) => {

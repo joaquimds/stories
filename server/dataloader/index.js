@@ -1,3 +1,4 @@
+import { createEditableLoader } from './editableLoader'
 import { createHasChildLoader } from './hasChildLoader'
 import { createHasParentLoader } from './hasParentLoader'
 import { createTitleLoader } from './titleLoader'
@@ -9,5 +10,6 @@ export const createDataLoaders = () => {
     titleLoader: createTitleLoader(),
     hasChildLoader: createHasChildLoader(),
     hasParentLoader: createHasParentLoader(),
+    editableLoader: createEditableLoader(),
   }
 }

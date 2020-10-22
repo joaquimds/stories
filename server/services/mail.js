@@ -7,7 +7,7 @@ const {
   site,
 } = config
 
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
   pool: true,
   host,
   port: 465,
@@ -59,3 +59,51 @@ export const sendReport = (sentence) =>
       resolve()
     })
   })
+
+export const sendNotifications = (to, notifications) =>
+  new Promise((resolve, reject) => {
+    let text = ''
+    let html = ''
+    const byAuthor = notifications.reduce((obj, notification) => {
+      const list = obj[notification.data.authorName] || []
+      list.push(notification)
+      obj[notification.data.authorName] = list
+      return obj
+    }, {})
+    for (const authorName of Object.keys(byAuthor)) {
+      const list = byAuthor[authorName]
+      const urls = list.map(
+        (notification) => `${site.url}/${notification.data.storyId}`
+      )
+      const links = urls.map((url) => `<a href="${url}">here</a>`)
+      text += `Read what ${authorName} wrote at ${prettyJoin(urls)}\r\n\r\n`
+      html += `Read what ${authorName} wrote ${prettyJoin(links)}.<br><br>`
+    }
+    text += 'You can turn off these emails on your account page.'
+    html += `You can turn off these emails on your <a href="${site.url}/account">account page</a>.`
+    const mailOptions = {
+      from: `"Story Tree" ${user}`,
+      to,
+      subject: `Your story was added to!`,
+      text,
+      html,
+    }
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        return reject(err)
+      }
+      logger.info(`Sent notification email to ${info.envelope.to[0]}`)
+      resolve()
+    })
+  })
+
+const prettyJoin = (list = []) => {
+  if (!list.length) {
+    return ''
+  }
+  if (list.length === 1) {
+    return list[0]
+  }
+  const last = list.pop()
+  return `${list.join(', ')} and ${last}`
+}

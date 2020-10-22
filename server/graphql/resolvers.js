@@ -1,5 +1,6 @@
 import { raw, ref } from 'objection'
 import { Like } from '../models/Like'
+import { Notification } from '../models/Notification'
 import { Sentence } from '../models/Sentence'
 import { SentenceLink } from '../models/SentenceLink'
 import { Title } from '../models/Title'
@@ -171,7 +172,7 @@ export const resolvers = {
     otherSentences: async (p, { from, direction, search, offset = 0 }) => {
       const thread = parseThread(from)
       if (search) {
-        const query = Sentence.query().whereNot({ id: '0' })
+        const query = Sentence.query().whereNotNull('authorId')
         const escapedSearch = search.replace(/%/g, '\\%')
         query.andWhere('content', 'ilike', `%${escapedSearch}%`)
         const countResult = await query.clone().count().first()
@@ -191,7 +192,7 @@ export const resolvers = {
             .join('sentenceLinks as sl1', 'sentences.id', 'sl1.to')
             .join('sentenceLinks as sl2', 'sl1.from', 'sl2.from')
             .join('sentenceLinks as sl3', 'sl2.to', 'sl3.from')
-            .where('sentences.id', '!=', '0')
+            .whereRaw('sentences.author_id is not null')
             .andWhere('sl3.to', '=', thread.end)
           break
         case 'children':
@@ -199,7 +200,7 @@ export const resolvers = {
             .join('sentenceLinks as sl1', 'sentences.id', 'sl1.to')
             .join('sentenceLinks as sl2', 'sl1.from', 'sl2.from')
             .join('sentenceLinks as sl3', 'sl2.to', 'sl3.to')
-            .where('sentences.id', '!=', '0')
+            .whereRaw('sentences.author_id is not null')
             .andWhere('sl3.from', '=', thread.end)
           break
         case 'siblings':
@@ -207,7 +208,7 @@ export const resolvers = {
           query = Sentence.query()
             .join('sentenceLinks as sl1', 'sentences.id', 'sl1.to')
             .join('sentenceLinks as sl2', 'sl1.from', 'sl2.from')
-            .where('sentences.id', '!=', '0')
+            .whereRaw('sentences.author_id is not null')
             .andWhere('sl2.to', '=', thread.end)
           break
       }
@@ -234,11 +235,11 @@ export const resolvers = {
       const titleEntity = await Title.query().findOne({ storyId: id })
       return titleEntity?.title
     },
-    permalink: async ({ id, slug }, args, { dataLoaders }) => {
+    permalink: async ({ id, slug }, args, ctx) => {
       if (slug) {
         return `/${slug}`
       }
-      const titleEntity = await dataLoaders.titleLoader.load(id)
+      const titleEntity = await ctx.dataLoaders.titleLoader.load(id)
       return titleEntity ? `/${titleEntity.slug}` : `/${id}`
     },
     parent: async ({ ending, thread }) => {
@@ -331,6 +332,9 @@ export const resolvers = {
       const { authorId } = sentence
       return authorId ? ctx.dataLoaders.userLoader.load(authorId) : null
     },
+    editable: async ({ id }, args, ctx) => {
+      return ctx.dataLoaders.editableLoader.load(id)
+    },
     hasChild: ({ id }, args, ctx) => {
       return ctx.dataLoaders.hasChildLoader.load(id)
     },
@@ -360,8 +364,20 @@ export const resolvers = {
           to: ending.id,
         })
         const thread = ending.getCreatedThread()
-        await ending.createPoints(thread, user.id, 'WRITE')
-        return { story: { id: printThread(thread), thread, ending } }
+        const authorIds = await ending.createPointsReturningAuthorIds(
+          thread,
+          user.id,
+          'WRITE'
+        )
+        const usersToNotify = authorIds.filter(
+          (authorId) => authorId && authorId !== user.id
+        )
+        const newStoryId = printThread(thread)
+        await Notification.createNotifications(usersToNotify, {
+          storyId: newStoryId,
+          authorName: user.name,
+        })
+        return { story: { id: newStoryId, thread, ending } }
       } catch (e) {
         logger.error('%s %o %o', 'addSentenceMutation', args, e.message)
         return { errorCode: 500 }
@@ -588,7 +604,7 @@ export const resolvers = {
           ...queryArgs,
           sentenceId: sentence.id,
         })
-        await sentence.createPoints(thread, user.id, 'LIKE')
+        await sentence.createPointsReturningAuthorIds(thread, user.id, 'LIKE')
         return {}
       } catch (e) {
         logger.error('%s %o %o', 'likeStoryMutation', args, e.message)
@@ -612,6 +628,10 @@ export const resolvers = {
           return { errorCode: 404 }
         }
         if (!args.createNewBranch && sentence.authorId === user.id) {
+          const isEditable = await Sentence.isEditable(sentence.id)
+          if (!isEditable) {
+            return { errorCode: 403 }
+          }
           const editedThread = parseThread(editedId)
           const updated = await Sentence.query().patchAndFetchById(
             editedThread.end,
@@ -663,8 +683,19 @@ export const resolvers = {
           }))
         )
         let thread = newChild.getCreatedThread()
-        await newChild.createPoints(thread, user.id, 'WRITE')
+        const authorIds = await newChild.createPointsReturningAuthorIds(
+          thread,
+          user.id,
+          'WRITE'
+        )
+        const usersToNotify = authorIds.filter(
+          (authorId) => authorId && authorId !== user.id
+        )
         const newChildId = printThread(thread)
+        await Notification.createNotifications(usersToNotify, {
+          storyId: newChildId,
+          authorName: user.name,
+        })
 
         const response = {
           newStory: { id: newChildId, thread, ending: newChild },

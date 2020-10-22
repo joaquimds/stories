@@ -1,10 +1,12 @@
 import { logger } from '../services/logger'
 import { createFixtures } from './createFixtures'
 import { createMinimalFixtures } from './createMinimalFixtures'
+import { sendAllNotifications as sendNotifications } from './sendNotifications'
 
 const commands = {
   createFixtures,
   createMinimalFixtures,
+  sendNotifications,
 }
 
 export const runCommand = async (name, ...args) => {

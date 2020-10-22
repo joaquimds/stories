@@ -4,6 +4,7 @@ export const sentence = gql`
   fragment SentenceFragment on Sentence {
     id
     content
+    editable
     author {
       id
       name

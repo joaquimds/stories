@@ -17,6 +17,8 @@ pp.use(
         if (!isValid) {
           return done(null, false, { message: 'Incorrect password' })
         }
+        delete user.passwordHash
+        delete user.resetToken
         return done(null, user)
       } catch (e) {
         return done(e)

@@ -15,13 +15,19 @@ const Login = () => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [isNotifiable, setNotifiable] = useState(false)
   const [error, setError] = useState(null)
 
   const onSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const { path, body } = getRequestParams(mode, { name, email, password })
+    const { path, body } = getRequestParams(mode, {
+      name,
+      email,
+      password,
+      isNotifiable,
+    })
     try {
       const response = await fetch(path, {
         method: mode === MODES.register ? 'PUT' : 'POST',
@@ -85,6 +91,18 @@ const Login = () => {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+        {mode === MODES.register ? (
+          <>
+            <label htmlFor="notifiable">Receive Email Notifications</label>
+            <small>(sent when other writers add to your stories)</small>
+            <input
+              type="checkbox"
+              id="notifiable"
+              checked={isNotifiable}
+              onChange={(e) => setNotifiable(e.target.checked)}
+            />
+          </>
+        ) : null}
         {mode !== MODES.forgotPassword ? (
           <>
             <label htmlFor="password">Password</label>
@@ -124,14 +142,17 @@ const Login = () => {
   )
 }
 
-const getRequestParams = (mode, { name, email, password }) => {
+const getRequestParams = (mode, { name, email, password, isNotifiable }) => {
   if (mode === MODES.forgotPassword) {
     return { path: '/api/forgot-password', body: { email } }
   }
   if (mode === MODES.login) {
     return { path: '/api/login', body: { email, password } }
   }
-  return { path: '/api/register', body: { name, email, password } }
+  return {
+    path: '/api/register',
+    body: { name, email, password, isNotifiable },
+  }
 }
 
 export default Login

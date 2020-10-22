@@ -373,7 +373,7 @@ const Page = ({ story }) => {
                       <a className={styles.view}>view</a>
                     </Link>
                   ) : null}
-                  {isAuthor ? (
+                  {isAuthor && p.ending.editable ? (
                     <button
                       className={`${styles.edit} link`}
                       type="button"

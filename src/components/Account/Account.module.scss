@@ -8,10 +8,21 @@
 
   ul {
     list-style: initial;
-    padding-left: 1rem;
+    padding-left: spacing(2);
   }
 
   li {
     margin-bottom: spacing(1);
+  }
+}
+
+.notifications {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  margin-bottom: spacing(1);
+
+  input {
+    margin: 0 spacing(0) 0 0;
   }
 }

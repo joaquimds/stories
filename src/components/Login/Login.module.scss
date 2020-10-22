@@ -3,6 +3,10 @@
 .login {
   display: flex;
   flex-direction: column;
+
+  input[type="checkbox"] {
+    margin-top: spacing(1);
+  }
 }
 
 .toggle {

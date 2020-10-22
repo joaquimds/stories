@@ -133,13 +133,15 @@ export class Sentence extends Model {
     return query.limit(limit)
   }
 
-  async createPoints(thread, userId, type) {
+  async createPointsReturningAuthorIds(thread, userId, type) {
     const parents = await this.getParents(thread)
+    const authorIds = []
     let sentenceId = this.id
     const chunks = []
     let points = []
     while (parents.length) {
       const parent = parents.pop()
+      authorIds.push(parent.ending.authorId)
       const storyParentId = parent.id
       points.push([sentenceId, storyParentId, userId, type])
       if (points.length === 100) {
@@ -163,6 +165,7 @@ export class Sentence extends Model {
         args
       )
     }
+    return authorIds
   }
 
   async removePoints(thread, type, userIds) {
@@ -183,6 +186,26 @@ export class Sentence extends Model {
     const thread = parseThread(this.storyParentId)
     thread.end = this.id
     return thread
+  }
+
+  static async areEditable(ids) {
+    const scores = await Sentence.query()
+      .select('sentenceId', raw('count(1) as value'))
+      .joinRaw(
+        'inner join points on points.sentence_id = sentences.id and points.user_id != sentences.author_id'
+      )
+      .whereIn('sentences.id', ids)
+      .andWhere('points.count', '>', 0)
+      .groupBy('sentenceId')
+    return ids.map((id) => {
+      const score = scores.find((s) => s.sentenceId === id)
+      return !score || score.value === 0
+    })
+  }
+
+  static async isEditable(id) {
+    const result = await Sentence.areEditable([id])
+    return result[0]
   }
 
   static addOrder(query, storyId, order = 'oldest') {
