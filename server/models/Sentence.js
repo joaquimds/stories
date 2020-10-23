@@ -1,4 +1,5 @@
 import { Model, ref, raw } from 'objection'
+import config from '../../config'
 import { parseThread, printThread } from '../util/threads'
 import { Point } from './Point'
 import { SentenceLink } from './SentenceLink'
@@ -116,7 +117,12 @@ export class Sentence extends Model {
     return Number(countQuery.count)
   }
 
-  async getChildren(storyId, order = 'score', exclude = [], limit = 3) {
+  async getChildren(
+    storyId,
+    order = 'score',
+    exclude = [],
+    limit = config.constants.pageSize
+  ) {
     const subquery = SentenceLink.query()
       .select('from')
       .where({ to: ref('sentences.id') })

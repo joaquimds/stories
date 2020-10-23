@@ -1,4 +1,5 @@
 import { raw, ref } from 'objection'
+import config from '../../config'
 import { Like } from '../models/Like'
 import { Notification } from '../models/Notification'
 import { Sentence } from '../models/Sentence'
@@ -9,7 +10,7 @@ import { logger } from '../services/logger'
 import { slugify } from '../util/text'
 import { addThreadStep, parseThread, printThread } from '../util/threads'
 
-const LIMIT = 3
+const LIMIT = config.constants.pageSize
 
 export const resolvers = {
   Query: {

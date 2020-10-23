@@ -24,7 +24,7 @@ export const sendPasswordReset = (to, token) =>
     const text = `Go to ${resetUrl} to reset your password`
     const html = `Click here to reset your password: <a href="${resetUrl}">${resetUrl}</a>`
     const mailOptions = {
-      from: `"Story Tree" ${user}`,
+      from: `"Tree of Tales" ${user}`,
       to,
       subject: 'Password reset',
       text,
@@ -45,7 +45,7 @@ export const sendReport = (sentence) =>
     const text = sentenceUrl
     const html = `<a href="${sentenceUrl}">${sentenceUrl}</a>`
     const mailOptions = {
-      from: `"Story Tree" ${user}`,
+      from: `"Tree of Tales" ${user}`,
       to: config.constants.adminEmail,
       subject: `Sentence Reported: ${sentence.id}`,
       text,
@@ -82,7 +82,7 @@ export const sendNotifications = (to, notifications) =>
     text += 'You can turn off these emails on your account page.'
     html += `You can turn off these emails on your <a href="${site.url}/account">account page</a>.`
     const mailOptions = {
-      from: `"Story Tree" ${user}`,
+      from: `"Tree of Tales" ${user}`,
       to,
       subject: `Your story was added to!`,
       text,
