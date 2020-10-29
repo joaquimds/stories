@@ -1,0 +1,19 @@
+@import '../../styles/functions';
+
+.faq {
+  h1 {
+    margin-bottom: spacing(1);
+    text-align: center;
+  }
+  p {
+    margin-bottom: spacing(1);
+  }
+  a {
+    text-decoration: underline;
+  }
+  section:last-child {
+    :last-child {
+      margin-bottom: 0;
+    }
+  }
+}

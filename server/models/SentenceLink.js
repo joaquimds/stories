@@ -1,6 +1,7 @@
 import { Model } from 'objection'
 import { Like } from './Like'
 import { Point } from './Point'
+import { Title } from './Title'
 
 export class SentenceLink extends Model {
   static get tableName() {
@@ -14,6 +15,10 @@ export class SentenceLink extends Model {
       .andWhereNot({ userId: this.authorId })
       .first()
     if (likeResult && likeResult.count > 0) {
+      return true
+    }
+    const titleResult = await Title.query().count().where({ storyId }).first()
+    if (titleResult && titleResult.count > 0) {
       return true
     }
     const scoreResult = await Point.query()

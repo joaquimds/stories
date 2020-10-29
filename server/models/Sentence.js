@@ -195,17 +195,30 @@ export class Sentence extends Model {
   }
 
   static async areEditable(ids) {
-    const scores = await Sentence.query()
-      .select('sentenceId', raw('count(1) as value'))
+    const metadata = await Sentence.query()
+      .select(
+        'sentences.id',
+        'sentences.authorId',
+        raw('sum(points.count) as score'),
+        raw(
+          '(select count(1) as parent_count from sentence_links where "to" = sentences.id and sentence_links.author_id != sentences.author_id)'
+        )
+      )
       .joinRaw(
-        'inner join points on points.sentence_id = sentences.id and points.user_id != sentences.author_id'
+        'left outer join points on points.sentence_id = sentences.id and points.user_id != sentences.author_id'
       )
       .whereIn('sentences.id', ids)
-      .andWhere('points.count', '>', 0)
-      .groupBy('sentenceId')
+      .groupBy('sentences.id', 'authorId')
+      .debug()
     return ids.map((id) => {
-      const score = scores.find((s) => s.sentenceId === id)
-      return !score || score.value === 0
+      const data = metadata.find((s) => s.id === id)
+      if (!data) {
+        return true
+      }
+      if (data.parentCount && Number(data.parentCount) > 0) {
+        return false
+      }
+      return !data.score || Number(data.score) === 0
     })
   }
 

@@ -20,7 +20,11 @@
 .links {
   margin-left: auto;
 
-  :first-child {
+  a {
     margin-right: spacing(2);
+  }
+
+  :last-child {
+    margin-right: 0;
   }
 }

@@ -6,6 +6,8 @@ import { client } from '../services/redis'
 
 const RedisStore = connectRedis(session)
 
+const ONE_WEEK_MILLIS = 7 * 24 * 60 * 60 * 1000
+
 export const applyMiddleware = (app) => {
   if (config.session.secure) {
     app.set('trust proxy', 1)
@@ -13,6 +15,7 @@ export const applyMiddleware = (app) => {
   app.use(
     session({
       cookie: {
+        maxAge: ONE_WEEK_MILLIS,
         secure: config.session.secure,
       },
       secret: config.session.secret,

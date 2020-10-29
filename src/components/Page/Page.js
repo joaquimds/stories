@@ -493,6 +493,16 @@ const Page = ({ story }) => {
           ) : null}
         </div>
       )}
+      <div className={styles.actions}>
+        <a
+          download={`${story.title || 'story'}.txt`}
+          href={`data:text/plain;charset=utf-8,${encodeURIComponent(
+            sentences.map(({ content }) => content).join('\n\n')
+          )}`}
+        >
+          download
+        </a>
+      </div>
       {error ? <small className="error">{error}</small> : null}
     </>
   )
