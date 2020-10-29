@@ -18,13 +18,13 @@ const FAQ = () => {
       answer: (
         <>
           <p>
-            Begin reading a story by choosing a beginning fragment on the right
+            Begin reading a story by choosing an initial fragment from the right
             hand side of the{' '}
             <Link href="/">
               <a>home page</a>
             </Link>{' '}
-            (or the bottom of the page on mobile). Repeat this process to add
-            further fragments to the story.
+            (the bottom of the page on mobile). Choose further fragments to
+            continue the story.
           </p>
           <p>
             View completed stories by visiting the{' '}
@@ -40,11 +40,12 @@ const FAQ = () => {
       question: 'How do I create a new story?',
       answer: (
         <p>
-          Start a new story by submitting a new beginning fragment on the{' '}
+          Start a new story by submitting a new fragment on the{' '}
           <Link href="/">
             <a>home page</a>
           </Link>
-          .
+          . The form to do this is at the bottom of the list on the right hand
+          side of the page (the bottom of the page on mobile).
         </p>
       ),
     },
@@ -52,9 +53,9 @@ const FAQ = () => {
       question: 'How do I add to an existing story?',
       answer: (
         <p>
-          Write and submit your proposed next fragment while viewing the story
-          you wish to add to. For example, you can add to the story I was using
-          to test this website{' '}
+          Submit a new fragment while viewing the story you wish to
+          add to. For example, you can add to the story I was using to test this
+          website{' '}
           <Link href="/2">
             <a>here</a>
           </Link>
@@ -127,10 +128,10 @@ const FAQ = () => {
       answer: (
         <>
           <p>
-            Any story can be linked to any other. Select the {'"Link"'} tab
-            found at the top of the form used to submit content. You can either
-            search for the fragment you wish to connect to or navigate the tree
-            using the {'"trace back"'} and {'"check ahead"'} buttons.
+            Stories can be linked to any existing fragment. Select the{' '}
+            {'"Link"'} tab found at the top of the new fragment form. You can
+            either search for the fragment you wish to connect or navigate the
+            tree using the {'"trace back"'} and {'"check ahead"'} buttons.
           </p>
           <p>
             Once you have found the fragment you are looking for, select it to
@@ -144,8 +145,8 @@ const FAQ = () => {
       answer: (
         <>
           <p>
-            You can undo a link you have made between two fragments until
-            another user has saved or added the resulting story.
+            You can undo a link you have made between two fragments, but only
+            until another user has favourited or added to the resulting story.
           </p>
           <p>
             You can view all your links from your account page,{' '}
