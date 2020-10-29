@@ -53,9 +53,8 @@ const FAQ = () => {
       question: 'How do I add to an existing story?',
       answer: (
         <p>
-          Submit a new fragment while viewing the story you wish to
-          add to. For example, you can add to the story I was using to test this
-          website{' '}
+          Submit a new fragment while viewing the story you wish to add to. For
+          example, you can add to the story I was using to test this website{' '}
           <Link href="/2">
             <a>here</a>
           </Link>
@@ -99,8 +98,8 @@ const FAQ = () => {
       question: 'Can I edit or delete my fragments?',
       answer: (
         <p>
-          You can edit your fragments, but only while no other user has saved it
-          or used it in their own story. You can always delete your fragments.
+          You can edit your fragments, but only until they exist in other
+          {"users'"} stories. You can always delete your fragments.
         </p>
       ),
     },
@@ -146,7 +145,7 @@ const FAQ = () => {
         <>
           <p>
             You can undo a link you have made between two fragments, but only
-            until another user has favourited or added to the resulting story.
+            until it used in another {"user's"} story.
           </p>
           <p>
             You can view all your links from your account page,{' '}

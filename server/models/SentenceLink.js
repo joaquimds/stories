@@ -28,9 +28,9 @@ export class SentenceLink extends Model {
       .andWhere((qb) => {
         qb.where((qb) => {
           qb.where({ type: 'LIKE' }).andWhereNot({ userId: this.authorId })
-        }).orWhere((qb) => {
-          qb.where({ type: 'WRITE' })
         })
+          .orWhere({ type: 'WRITE' })
+          .orWhere({ type: 'TITLE' })
       })
       .first()
     return scoreResult && scoreResult.count > 0

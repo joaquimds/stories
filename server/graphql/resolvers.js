@@ -468,6 +468,7 @@ export const resolvers = {
           title,
           slug,
         })
+        await sentence.createPointsReturningAuthorIds(thread, authorId, 'TITLE')
         return { slug }
       } catch (e) {
         logger.error('%s %o %o', 'saveStoryMutation', args, e.message)

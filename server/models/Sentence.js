@@ -196,29 +196,15 @@ export class Sentence extends Model {
 
   static async areEditable(ids) {
     const metadata = await Sentence.query()
-      .select(
-        'sentences.id',
-        'sentences.authorId',
-        raw('sum(points.count) as score'),
-        raw(
-          '(select count(1) as parent_count from sentence_links where "to" = sentences.id and sentence_links.author_id != sentences.author_id)'
-        )
-      )
+      .select('sentences.id', raw('sum(points.count) as score'))
       .joinRaw(
-        'left outer join points on points.sentence_id = sentences.id and points.user_id != sentences.author_id'
+        'inner join points on points.sentence_id = sentences.id and points.user_id != sentences.author_id'
       )
       .whereIn('sentences.id', ids)
-      .groupBy('sentences.id', 'authorId')
-      .debug()
+      .groupBy('sentences.id')
     return ids.map((id) => {
       const data = metadata.find((s) => s.id === id)
-      if (!data) {
-        return true
-      }
-      if (data.parentCount && Number(data.parentCount) > 0) {
-        return false
-      }
-      return !data.score || Number(data.score) === 0
+      return !data || !data.score || Number(data.score) === 0
     })
   }
 
@@ -240,10 +226,11 @@ export class Sentence extends Model {
       default:
         subqueries.push(
           Point.query()
-            .count()
+            .countDistinct('userId')
             .as('matchingScore')
             .where({ sentenceId: ref('sentences.id'), storyParentId: storyId })
             .andWhere('count', '>', 0)
+            .andWhere('type', '!=', 'TITLE')
         )
         subqueries.push(
           Point.query()
@@ -251,6 +238,7 @@ export class Sentence extends Model {
             .as('score')
             .where({ sentenceId: ref('sentences.id') })
             .andWhere('count', '>', 0)
+            .andWhere('type', '!=', 'TITLE')
         )
         query.select(subqueries)
         query.orderBy('matchingScore', 'desc')
