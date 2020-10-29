@@ -99,12 +99,12 @@ const FAQ = () => {
       answer: (
         <p>
           You can edit your fragments, but only until they exist in other
-          {"users'"} stories. You can always delete your fragments.
+          {" users'"} stories. You can always delete your fragments.
         </p>
       ),
     },
     {
-      question: 'How do I bookmark or "like" a story?',
+      question: 'How do I bookmark or "favourite" a story?',
       answer: (
         <>
           <p>
@@ -129,8 +129,8 @@ const FAQ = () => {
           <p>
             Stories can be linked to any existing fragment. Select the{' '}
             {'"Link"'} tab found at the top of the new fragment form. You can
-            either search for the fragment you wish to connect or navigate the
-            tree using the {'"trace back"'} and {'"check ahead"'} buttons.
+            either search for the fragment you wish to connect to or navigate
+            the tree using the {'"trace back"'} and {'"check ahead"'} buttons.
           </p>
           <p>
             Once you have found the fragment you are looking for, select it to
