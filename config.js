@@ -13,9 +13,11 @@ module.exports = {
   },
   dev: process.env.NODE_ENV === 'development',
   email: {
-    host: 'mail.gandi.net',
-    user: 'stories@joaquimdsouza.com',
+    host: 'mail.smtp2go.com',
+    port: 2525,
+    user: 'stories',
     pass: process.env.SMTP_PASSWORD,
+    from: 'stories@treeoftales.net'
   },
   logger: {
     level: process.env.LOG_LEVEL || 'info',

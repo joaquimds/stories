@@ -3,15 +3,15 @@ import config from '../../config'
 import { logger } from './logger'
 
 const {
-  email: { host, user, pass },
+  email: { host, port, user, pass, from },
   site,
 } = config
 
 export const transporter = nodemailer.createTransport({
   pool: true,
   host,
-  port: 465,
-  secure: true,
+  port,
+  secure: false,
   auth: {
     user,
     pass,
@@ -24,7 +24,7 @@ export const sendPasswordReset = (to, token) =>
     const text = `Go to ${resetUrl} to reset your password`
     const html = `Click here to reset your password: <a href="${resetUrl}">${resetUrl}</a>`
     const mailOptions = {
-      from: `"Tree of Tales" ${user}`,
+      from: `"Tree of Tales" ${from}`,
       to,
       subject: 'Password reset',
       text,
@@ -34,7 +34,7 @@ export const sendPasswordReset = (to, token) =>
       if (err) {
         return reject(err)
       }
-      logger.info(`Sent reset password email to ${info.envelope.to[0]}`)
+      logger.info(`Sent report to ${info.envelope.to[0]}`)
       resolve()
     })
   })
@@ -45,7 +45,7 @@ export const sendReport = (sentence) =>
     const text = sentenceUrl
     const html = `<a href="${sentenceUrl}">${sentenceUrl}</a>`
     const mailOptions = {
-      from: `"Tree of Tales" ${user}`,
+      from: `"Tree of Tales" ${from}`,
       to: config.constants.adminEmail,
       subject: `Sentence Reported: ${sentence.id}`,
       text,
@@ -82,7 +82,7 @@ export const sendNotifications = (to, notifications) =>
     text += 'You can turn off these emails on your account page.'
     html += `You can turn off these emails on your <a href="${site.url}/account">account page</a>.`
     const mailOptions = {
-      from: `"Tree of Tales" ${user}`,
+      from: `"Tree of Tales" ${from}`,
       to,
       subject: `Your story was added to!`,
       text,
